@@ -27,6 +27,7 @@ class WrapperConfig:
     device: str = "cuda"
     allow_dummy: bool = True
     force_dummy: bool = False
+    load_in_4bit: bool = False
 
 
 class _DummyBackbone(nn.Module):
@@ -79,11 +80,23 @@ class MultiPageRetrieverWrapper(nn.Module):
 
         try:
             self.processor = AutoProcessor.from_pretrained(self.cfg.model_name, trust_remote_code=True)
+            load_kwargs = {
+                "trust_remote_code": True,
+                "low_cpu_mem_usage": True,
+            }
+            if self.cfg.load_in_4bit:
+                from transformers import BitsAndBytesConfig
+                load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=self.cfg.dtype,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_use_double_quant=True,
+                )
+            else:
+                load_kwargs["torch_dtype"] = self.cfg.dtype
             model = AutoModelForCausalLM.from_pretrained(
                 self.cfg.model_name,
-                torch_dtype=self.cfg.dtype,
-                trust_remote_code=True,
-                low_cpu_mem_usage=True,
+                **load_kwargs,
             )
             self.backbone = model.get_model() if hasattr(model, "get_model") else model.model
         except Exception:
@@ -95,7 +108,6 @@ class MultiPageRetrieverWrapper(nn.Module):
     def generate_mask(self, seq_len: int, is_document_indexing: bool, device: torch.device) -> torch.Tensor:
         return build_mask(seq_len, is_document_indexing, device=device, dtype=torch.float32)
 
-    @torch.no_grad()
     def forward(self, input_ids: torch.Tensor, is_document_indexing: bool = True) -> torch.Tensor:
         # For smoke: text-token path only; multi-page image path comes next iteration.
         attn = self.generate_mask(input_ids.shape[1], is_document_indexing, input_ids.device)

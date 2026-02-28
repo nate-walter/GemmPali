@@ -11,6 +11,8 @@ export PYTHONPATH=.
 # Use local snapshot path to avoid gated Hub auth issues at runtime
 GEMMA_LOCAL="/home/nate/.cache/huggingface/hub/models--google--gemma-3-12b-it/snapshots/96b6f1eccf38110c56df3a15bffe176da04bfd80"
 
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
 torchrun --standalone --nproc_per_node=2 scripts/train_phase1_smoke.py \
   --pairs /home/nate/GemmPali/nvme_cache/processed/phase1/phase1_warmup_pairs.jsonl \
   --model "$GEMMA_LOCAL" \
@@ -18,4 +20,5 @@ torchrun --standalone --nproc_per_node=2 scripts/train_phase1_smoke.py \
   --max-len 128 \
   --dtype bf16 \
   --lr 1e-4 \
-  --log-every 10
+  --log-every 10 \
+  --load-in-4bit

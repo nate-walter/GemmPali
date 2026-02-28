@@ -34,6 +34,7 @@ def main():
     ap.add_argument("--dtype", default="bf16", choices=["bf16", "fp16", "fp32"])
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--log-every", type=int, default=10)
+    ap.add_argument("--load-in-4bit", action="store_true")
     args = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -54,7 +55,15 @@ def main():
         raise RuntimeError("No training rows")
 
     wrapper = MultiPageRetrieverWrapper(
-        WrapperConfig(model_name=args.model, embed_dim=128, pool_factor=4, dtype=dtype, device=device)
+        WrapperConfig(
+            model_name=args.model,
+            embed_dim=128,
+            pool_factor=4,
+            dtype=dtype,
+            device=device,
+            load_in_4bit=args.load_in_4bit,
+            allow_dummy=False,
+        )
     ).to(device)
 
     # Phase-1 smoke: freeze backbone, train retriever head only
