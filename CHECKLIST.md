@@ -24,8 +24,9 @@ Updated: 2026-02-28
 - [x] Run Phase 1 NVMe staging (only `vidore-colpali-train-set` + `vidore-docvqa-train`).
 
 ## Phase 2 — Data contract + preprocessing
-- [ ] Define canonical schema: `[query, image_sequence, target_page_idx, hard_negatives...]`.
-- [ ] Build converters for ViDoRe/DocVQA/MP-DocVQA/DUDE to canonical schema.
+- [x] Define Phase-1 canonical records via JSONL preprocessor script (`scripts/prepare_phase1_data.py`).
+- [x] Build initial converter for ViDoRe/DocVQA Phase-1 (`docvqa_corpus.jsonl`, `docvqa_queries.jsonl`, `phase1_warmup_pairs.jsonl`).
+- [ ] Extend converters for MP-DocVQA/DUDE canonical schema.
 - [ ] Build CGI corpus converter as supplemental stress set only.
 - [ ] Implement intra-document hard-negative mining (N vs N±1 same document).
 - [ ] Implement temporal hard-negatives where layout is similar but values differ.

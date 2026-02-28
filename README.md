@@ -30,6 +30,11 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 - Phase 1 NVMe staging completed (strict payload only):
   - `vidore-colpali-train-set` (~50G)
   - `vidore-docvqa-train` (~6.7G)
+- Phase 1 preprocessing started/completed on staged NVMe data:
+  - `docvqa_corpus.jsonl` (10,189 docs)
+  - `docvqa_queries.jsonl` (39,463 queries)
+  - `phase1_warmup_pairs.jsonl` (118,695 pairs)
+  - output root: `/home/nate/GemmPali/nvme_cache/processed/phase1`
 
 ## Dataset policy (critical)
 
