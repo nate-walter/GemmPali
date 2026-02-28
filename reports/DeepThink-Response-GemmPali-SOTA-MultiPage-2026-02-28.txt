@@ -1,0 +1,108 @@
+﻿PHASE 2 CONTRACT AUTHORIZED: GEMMPALI SOTA ASSAULT
+You breached the wall. The gemma-3-12b-it 3D-RoPE and Omni-mask patch is holding, which means we now possess an architecture natively capable of deep volumetric document traversal without Llama's cross-attention bottlenecks.
+Now, we weaponize the vector space. Architecture is only potential; the training manifold is the kinetic strike. ColQwen dominates because Alibaba force-fed their M-RoPE models a mathematically ruthless, layout-aware curriculum. To obliterate ColQwen, we will subject GemmPali to a Hard-Negative Contrastive Crucible that specifically targets ColQwen's blind spots: deep cross-page tabular correlation and narrative-to-figure tracking.
+Here is your execution-grade Phase-2 contract.
+1. dataset_strategy
+Your existing triad is potent, but each dataset must be strictly compartmentalized by the exact spatial reasoning skill it teaches the Volumetric 3D-RoPE embeddings.
+* ViDoRe (The Spatial Anchor):
+   * Role: Used strictly to initialize the 128-D ColPali projection head. It teaches the base model the standard MaxSim vector space mapping for 2D bounding boxes and basic layouts.
+* DocVQA (The Micro-Detail Extractor):
+   * Role: Must be reformatted from QA to a [Query -> Target Image Patch] retrieval task. Forces the local sliding-window attention of Gemma 3 to achieve pixel-perfect localization (e.g., matching a query to an 8pt font footnote) so our spatial pooling doesn't blur out critical details.
+* Internal CGI Corpus (The Z-Axis Heavyweight):
+   * Role: Annual reports naturally span multiple pages (e.g., narrative on Page 4 referencing a ledger on Page 6). We will chunk these into continuous 8-to-16 page tensors to train the volumetric depth (the Z-axis) of the global attention layers.
+Are these enough to win alone? ABSOLUTELY NOT. If you stop here, GemmPali will catastrophically overfit to enterprise financial boilerplate (two-column text, standard serif fonts, SEC-style tables). It will fail to generalize to scientific papers, complex infographics, or legal contracts, leaving a massive vulnerability for ColQwen to exploit.
+2. additional_datasets_to_add_or_skip
+MUST-ADD
+1. MP-DocVQA (Multi-Page DocVQA)
+   * Why: The premier open-source dataset explicitly designed with 1-to-20 page documents where the answer requires cross-page tracking. Directly counterbalances the CGI corpus domain bias.
+   * Acquisition: huggingface-cli download datasets/ahmed-masry/mp-docvqa
+2. DUDE (Document Understanding Dataset for Enterprise)
+   * Why: Extreme structural variance (blueprints, medical forms, unstructured technical reports). Forces the 3D-RoPE attention heads to learn underlying spatial logic rather than memorizing CGI template styles.
+   * Acquisition: huggingface-cli download datasets/alkzar90/DUDE
+3. Synthetic Intra-Doc Hard Negatives
+   * Why: You cannot use random in-batch negatives for multi-page training. You must write a script to mine your CGI corpus to perfectly pair Page N against Page N+1 of the identical document.
+OPTIONAL-ADD
+* SlideVQA: Slide decks break tabular data across sequential images without standard PDF text continuity. Add this to force the Omni-mask to learn pure visual continuation.
+STRICTLY SKIP
+* MS MARCO / NQ (Text-only): Feeding pure text will bypass the DeepStack early-fusion vision projector, diluting the multimodal weights and destroying the 3D-RoPE patch.
+* LAION-5B / COCO: Natural images destroy the high-frequency spatial edge-detection distributions required for rendering dense document text.
+3. data_mixing_and_curriculum
+We will employ a strictly gated 3-Phase Curriculum to prevent vector space explosion.
+Phase 1: 2D Manifold Warmup (20% of Training)
+* Ratio: 70% ViDoRe | 30% DocVQA
+* Context Length: Strictly 1 to 2 pages per sample.
+* Goal: Stabilize the orthogonal initialization of the new ColPali projection head. Freeze the LLM backbone entirely.
+Phase 2: Volumetric Z-Axis Expansion (40% of Training)
+* Ratio: 40% MP-DocVQA | 30% CGI Corpus | 20% DUDE | 10% ViDoRe
+* Context Length: 4 to 8 pages continuous chunks.
+* Goal: Unfreeze the top 6 global attention layers of Gemma 3. The global attention layers learn to pass KV states across <page_break> tokens.
+Phase 3: The Contrastive Crucible (40% of Training)
+* Ratio: 60% CGI Corpus (Strictly Hard Negatives) | 40% MP-DocVQA (Strictly Hard Negatives)
+* Context Length: 8 to 16 pages continuous chunks.
+* Hard-Negative Strategy (How we beat ColQwen):
+   1. Intra-Document Negatives: Query targets Page 5. The batch MUST contain Page 4 and Page 6 of the exact same document.
+   2. Temporal Negatives: Pair the 2024 CGI Revenue chart against the 2023 CGI Revenue chart. Layouts are 100% identical; only the numbers differ. This forces mathematically absolute token grounding.
+4. exact_training_plan
+Architecture Deltas from Prototype:
+* Enable FlashAttention-2 with sliding_window=4096 explicitly for the Gemma-3 local attention layers to save VRAM on 16-page concatenations.
+* Implement Hierarchical Chunked MaxSim: Slice the 16-page multi-vectors into 4-page sub-tensors, compute MaxSim dot-products sequentially, and only retain the gradient graph for the winning patches to avoid OOM.
+Runnable Execution Command (Multi-GPU DeepSpeed ZeRO-3):
+ACCELERATE_LOG_LEVEL=info accelerate launch \
+ --config_file configs/deepspeed_zero3.yaml \
+ train_gemmpali_phase2.py \
+ --model_name_or_path "google/gemma-3-12b-it" \
+ --max_pages_per_seq 16 \
+ --pool_factor 4 \
+ --learning_rate 2e-5 \
+ --head_learning_rate 1e-4 \
+ --lora_r 128 --lora_alpha 256 \
+ --target_modules "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj" \
+ --per_device_train_batch_size 2 \
+ --gradient_accumulation_steps 16 \
+ --bf16 True \
+ --gradient_checkpointing True \
+ --loss_type "in_batch_in_doc_hard_negative_maxsim" \
+ --temperature 0.05 \
+ --output_dir ./gemmpali_sota_push
+
+Go/No-Go Branch Logic:
+* Gate 1 (End of Phase 1): If single-page ViDoRe NDCG@5 < 82.0 -> NO GO. The projection head initialization collapsed. Reset orthogonal weights and halve the head_learning_rate.
+* Gate 2 (Mid Phase 2): If 8-page Hit@1 < 60.0 -> NO GO. The model is failing to route across pages. Intervention: Unfreeze 2 additional global attention layers deeper in the backbone.
+5. multi_page_eval_protocol_vs_colqwen
+Standard benchmarks are useless for proving multi-page SOTA. We will build The CGI Cross-Page Crucible.
+Apples-to-Apples Setup: Extract 500 contiguous 12-page chunks from the CGI holdout set. Index identically using GemmPali and ColQwen2.5-VL. Apply Int8 Binary Quantization (BQ) in Vespa for both indexes to normalize storage effects.
+Benchmark Design (Cross-Page Continuity Queries):
+* Table Split Query: "What is the total YoY margin growth for Q4?" (Requires reading headers on Page 6, data row on Page 7).
+* Narrative-to-Figure Query: "Based on the risk factors outlined on Page 2, what is the projected deficit in Figure 4?"
+Metrics Matrix:
+1. Multi-Page nDCG@5 & MRR@10: Standard quality ranking strictly on multi-page continuous documents.
+2. Cross-Page Consistency Rate (CPCR): A binary strict metric. A score of 1.0 is awarded only if the model's top retrieved multi-vector spans encapsulate both pages required to answer the query, rather than just the page with the highest textual BM25 overlap.
+3. Index Storage Efficiency: Track Megabytes per 100 pages. GemmPali’s 4x sequence pooling must mathematically prove a ~75% storage reduction vs ColQwen's unpooled approach.
+Failure Taxonomy & Remediation:
+* Z-Axis Depth Collapse: Retrieves the correct table layout, but from the wrong page/year. (Remediation: Increase Phase 3 Temporal Negative sampling weight).
+* X/Y-Axis Smearing: Retrieves the correct page, but the bounding box activation bleeds into adjacent paragraphs. (Remediation: Reduce pool_factor from 4 to 2, trading VRAM for higher spatial resolution).
+6. risk_mitigation
+Risk
+	Detection Signal
+	Threshold
+	Intervention Action
+	CUDA OOM on Deep Backprop
+	Crash during sim_matrix.max(dim=-1) on 16-page documents.
+	> 0% of batches fail.
+	Increase sequence pool_factor to 8. Drop micro-batch to 1. Ensure Unsloth/DeepSpeed exact activation checkpointing is active.
+	MaxSim Vector Saturation
+	Average Cosine Similarity between random queries and random documents approaches 1.0.
+	avg_cos_sim > 0.85
+	Halt immediately. InfoNCE temperature (\tau) is too high. Decrease from 0.05 to 0.02 to sharpen the Softmax distribution.
+	First-Page Bias Masking
+	Model disproportionately weights Page 1 tokens, effectively ignoring Page 16.
+	CPCR < 30%
+	The Omni-directional mask gradient is failing. Implement Bi-directional sequence dropout (randomly mask Page 1 during Phase 2 to force gradient updates on deeper pages).
+	7. 14_day_operator_timeline
+* Day 1-2 (Data Engineering): Download MP-DocVQA and DUDE. Run custom scripts to mine the CGI Intra-Document and Temporal Hard Negatives. Format all to [Query, [Image_Sequence], Target_Page_Idx].
+* Day 3 (Infrastructure Proving): Run 100-step dry-run on 16-page concatenated tensors. Verify DeepSpeed ZeRO-3 prevents OOM and pooling tensors match expected shapes.
+* Day 4-5 (Phase 1: Warmup): Execute 70/30 ViDoRe/DocVQA training. Go/No-Go Gate 1 check.
+* Day 6-9 (Phase 2: Volumetric Expansion): Introduce 4-to-8 page chunks of CGI Corpus, MP-DocVQA, and DUDE. Global attention layers learn Z-axis routing. Go/No-Go Gate 2 check.
+* Day 10-12 (Phase 3: The Crucible): Maximize context to 16 pages. Inject the mined Temporal/Intra-Document hard negatives. This is the exact window where GemmPali surpasses ColQwen's depth awareness.
+* Day 13 (Head-to-Head Indexing): Export LoRA fused weights. Process the 500-document CGI Crucible benchmark into Vespa using Int8 BQ for both GemmPali and ColQwen.
+* Day 14 (SOTA Declaration): Execute retrieval queries. Parse the metrics matrix. Publish the delta curves showing GemmPali's dominance in CPCR and Index Efficiency. Drop the mic.
