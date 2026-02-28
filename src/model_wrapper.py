@@ -112,7 +112,11 @@ class MultiPageRetrieverWrapper(nn.Module):
         # For smoke: text-token path only; multi-page image path comes next iteration.
         attn = self.generate_mask(input_ids.shape[1], is_document_indexing, input_ids.device)
         _ = attn  # reserved for future custom attention hooks
-        out = self.backbone(input_ids=input_ids)
+        if any(p.requires_grad for p in self.backbone.parameters()):
+            out = self.backbone(input_ids=input_ids)
+        else:
+            with torch.no_grad():
+                out = self.backbone(input_ids=input_ids)
         hidden_states = out.last_hidden_state
         hidden_states = self.rope3d(hidden_states)
         hidden_states = hidden_states.to(self.head.proj.weight.dtype)
