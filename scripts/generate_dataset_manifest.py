@@ -33,12 +33,15 @@ def du_bytes(path: Path) -> int:
 
 
 def hf_info(repo_id: str):
-    try:
-        r = subprocess.run([HF, "datasets", "info", repo_id], capture_output=True, text=True, check=True)
-        info = json.loads(r.stdout)
-        return {"sha": info.get("sha"), "last_modified": info.get("last_modified")}
-    except Exception as e:
-        return {"sha": None, "last_modified": None, "error": str(e)}
+    last_err = None
+    for _ in range(3):
+        try:
+            r = subprocess.run([HF, "datasets", "info", repo_id], capture_output=True, text=True, check=True)
+            info = json.loads(r.stdout)
+            return {"sha": info.get("sha"), "last_modified": info.get("last_modified")}
+        except Exception as e:
+            last_err = e
+    return {"sha": None, "last_modified": None, "error": str(last_err)}
 
 
 def download_running(repo_id: str) -> bool:
