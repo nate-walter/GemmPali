@@ -35,6 +35,8 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--log-every", type=int, default=10)
     ap.add_argument("--load-in-4bit", action="store_true")
+    ap.add_argument("--save-dir", default="checkpoints/phase1")
+    ap.add_argument("--save-every", type=int, default=500)
     args = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -114,6 +116,21 @@ def main():
 
         if step % args.log_every == 0 and local_rank == 0:
             print(f"step={step} loss={loss.item():.4f}", flush=True)
+
+        if local_rank == 0 and step % args.save_every == 0:
+            sdir = Path(args.save_dir)
+            sdir.mkdir(parents=True, exist_ok=True)
+            ckpt = sdir / f"head_step_{step:07d}.pt"
+            torch.save({
+                "step": step,
+                "head": model.module.head.state_dict(),
+                "cfg": {
+                    "model": args.model,
+                    "dtype": args.dtype,
+                    "max_len": args.max_len,
+                },
+            }, ckpt)
+            print(f"checkpoint_saved={ckpt}", flush=True)
 
     if local_rank == 0:
         out = Path("reports/phase1_smoke_result.json")

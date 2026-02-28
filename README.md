@@ -63,6 +63,11 @@ Canonical dataset plan is now locked to:
 
 Phase 1 warmup default is now **2-GPU DDP on GPUs 3+4** for stability and throughput.
 
+Current run profile:
+- 4-bit backbone loading + frozen-backbone no-grad forward
+- train head path with checkpoint saves every 500 steps
+- initial full warmup target: 5000 steps
+
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
 
