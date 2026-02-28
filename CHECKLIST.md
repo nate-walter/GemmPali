@@ -6,6 +6,7 @@ Updated: 2026-02-28
 - [x] GemmPali is **NOT CGI-centric**.
 - [x] Primary objective: beat ColQwen on **general multi-page indexing/retrieval** across diverse document types.
 - [x] CGI corpus is treated as supplemental hard-negative / continuity stress data only.
+- [x] AHS-uni MP-DocVQA/DUDE corpus+qa splits are locked as canonical.
 
 ## Phase 0 — Proven baseline (already complete)
 - [x] DeepThink patch path implemented (masks/retriever_head/rope3d/wrapper wiring).
@@ -13,12 +14,12 @@ Updated: 2026-02-28
 - [x] Fresh-repo reproducibility verification passed.
 
 ## Phase 1 — Dataset acquisition (HDD-first)
-- [ ] Create canonical HDD dataset root for GemmPali training corpora.
-- [ ] Download MP-DocVQA to HDD dataset root.
-- [ ] Download DUDE to HDD dataset root.
-- [ ] Confirm ViDoRe + DocVQA availability and normalize location map.
-- [ ] Record storage footprint and integrity checksums/manifests.
-- [ ] Document ad-hoc NVMe staging policy (copy-on-train only).
+- [x] Create canonical HDD dataset root for GemmPali training corpora.
+- [~] Download MP-DocVQA to HDD dataset root (AHS-uni split: corpus+qa; in progress).
+- [~] Download DUDE to HDD dataset root (AHS-uni split: corpus+qa; in progress).
+- [~] Confirm ViDoRe + DocVQA availability and normalize location map (vidore/colpali_train_set + vidore/docvqa_train download in progress).
+- [x] Record dataset provenance + SHAs in manifest.
+- [x] Document **mandatory** NVMe staging policy (copy-on-train preflight).
 
 ## Phase 2 — Data contract + preprocessing
 - [ ] Define canonical schema: `[query, image_sequence, target_page_idx, hard_negatives...]`.
@@ -46,7 +47,7 @@ Updated: 2026-02-28
 
 ## Ops / guardrails
 - [x] Check in after each major step.
-- [ ] Keep all long-term datasets on HDD.
-- [ ] Use NVMe only as temporary ad-hoc training cache.
-- [ ] Keep dataset manifest + provenance in `docs/datasets/`.
-- [ ] Never reframe mission into domain-specialist tuning.
+- [x] Keep all long-term datasets on HDD.
+- [x] Use NVMe only as temporary training cache, staged per phase.
+- [x] Keep dataset manifest + provenance in `docs/datasets/`.
+- [x] Never reframe mission into domain-specialist tuning.

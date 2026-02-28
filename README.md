@@ -29,19 +29,22 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 All training corpora are stored under HDD roots for space management and reproducibility.
 
 - Long-term datasets: **HDD only**
-- NVMe usage: **ad-hoc copy/stage only when actively training**
-- After training run: clear staged NVMe copies unless explicitly retained
+- NVMe usage: **mandatory preflight stage for active training phase only**
+- Run phase staging script before each training launch (Phase 1/2/3).
+- After training run: clear staged NVMe copies unless explicitly retained.
 
 This policy is non-negotiable for operational stability.
 
 ## Dataset strategy baseline
 
-We currently plan around:
-- ViDoRe
-- DocVQA
-- MP-DocVQA (to add/download)
-- DUDE (to add/download)
+Canonical dataset plan is now locked to:
+- `vidore/colpali_train_set`
+- `vidore/docvqa_train`
+- `AHS-uni/mpdocvqa-corpus` + `AHS-uni/mpdocvqa-qa`
+- `AHS-uni/dude-corpus` + `AHS-uni/dude-qa`
 - Internal CGI annual-report corpus (supplemental stress domain, not central identity)
+
+(We are intentionally not using alternate MP-DocVQA/DUDE distributions unless explicitly re-approved.)
 
 ## Training philosophy
 
