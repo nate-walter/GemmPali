@@ -1,0 +1,26 @@
+{
+  "model": "google/gemma-3-12b-it",
+  "device": "cuda",
+  "dtype": "bf16",
+  "using_dummy": false,
+  "pages": 6,
+  "input_shape": [
+    1,
+    384
+  ],
+  "doc_vec_shape": [
+    1,
+    96,
+    128
+  ],
+  "qry_vec_shape": [
+    1,
+    96,
+    128
+  ],
+  "maxsim": [
+    96.0
+  ],
+  "elapsed_sec": 13.856157541275024,
+  "peak_vram_gb": 23.001333236694336
+}

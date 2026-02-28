@@ -1,0 +1,113 @@
+import math
+from dataclasses import dataclass
+from types import SimpleNamespace
+from typing import Optional
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from src.masks import build_mask
+from src.retriever_head import RetrieverHead
+from src.rope3d import Volumetric3DRoPE, RoPE3DConfig
+
+try:
+    from transformers import AutoModelForCausalLM, AutoProcessor
+except Exception:  # pragma: no cover
+    AutoModelForCausalLM = None
+    AutoProcessor = None
+
+
+@dataclass
+class WrapperConfig:
+    model_name: str = "google/gemma-3-4b-it"
+    embed_dim: int = 128
+    pool_factor: int = 4
+    dtype: torch.dtype = torch.bfloat16
+    device: str = "cuda"
+    allow_dummy: bool = True
+    force_dummy: bool = False
+
+
+class _DummyBackbone(nn.Module):
+    def __init__(self, hidden_size: int = 1024):
+        super().__init__()
+        self.config = SimpleNamespace(hidden_size=hidden_size)
+        self.embed = nn.Embedding(32000, hidden_size)
+        self.ff = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, hidden_size),
+        )
+
+    def forward(self, input_ids: torch.Tensor, **kwargs):
+        h = self.ff(self.embed(input_ids))
+        return SimpleNamespace(last_hidden_state=h)
+
+
+class MultiPageRetrieverWrapper(nn.Module):
+    """Gemma wrapper with ColPali-style projection head for smoke/integration tests."""
+
+    def __init__(self, cfg: WrapperConfig):
+        super().__init__()
+        self.cfg = cfg
+        self.processor = None
+        self.backbone = None
+        self.using_dummy = False
+        self._load_backbone()
+        hidden_size = getattr(self.backbone.config, "hidden_size", None)
+        if hidden_size is None:
+            hidden_size = getattr(getattr(self.backbone.config, "text_config", object()), "hidden_size", None)
+        if hidden_size is None:
+            raise AttributeError("Could not resolve hidden_size from backbone config")
+        self.head = RetrieverHead(hidden_size, cfg.embed_dim, cfg.pool_factor)
+        self.head = self.head.to(device=cfg.device, dtype=cfg.dtype)
+        self.rope3d = Volumetric3DRoPE(RoPE3DConfig(enabled=False))
+
+    def _load_backbone(self):
+        if self.cfg.force_dummy:
+            self.backbone = _DummyBackbone()
+            self.using_dummy = True
+            return
+
+        if AutoModelForCausalLM is None:
+            if not self.cfg.allow_dummy:
+                raise RuntimeError("transformers not installed and allow_dummy=False")
+            self.backbone = _DummyBackbone()
+            self.using_dummy = True
+            return
+
+        try:
+            self.processor = AutoProcessor.from_pretrained(self.cfg.model_name, trust_remote_code=True)
+            model = AutoModelForCausalLM.from_pretrained(
+                self.cfg.model_name,
+                torch_dtype=self.cfg.dtype,
+                trust_remote_code=True,
+                low_cpu_mem_usage=True,
+            )
+            self.backbone = model.get_model() if hasattr(model, "get_model") else model.model
+        except Exception:
+            if not self.cfg.allow_dummy:
+                raise
+            self.backbone = _DummyBackbone()
+            self.using_dummy = True
+
+    def generate_mask(self, seq_len: int, is_document_indexing: bool, device: torch.device) -> torch.Tensor:
+        return build_mask(seq_len, is_document_indexing, device=device, dtype=torch.float32)
+
+    @torch.no_grad()
+    def forward(self, input_ids: torch.Tensor, is_document_indexing: bool = True) -> torch.Tensor:
+        # For smoke: text-token path only; multi-page image path comes next iteration.
+        attn = self.generate_mask(input_ids.shape[1], is_document_indexing, input_ids.device)
+        _ = attn  # reserved for future custom attention hooks
+        out = self.backbone(input_ids=input_ids)
+        hidden_states = out.last_hidden_state
+        hidden_states = self.rope3d(hidden_states)
+        hidden_states = hidden_states.to(self.head.proj.weight.dtype)
+        return self.head(hidden_states)
+
+
+def maxsim_score(query_vecs: torch.Tensor, doc_vecs: torch.Tensor) -> torch.Tensor:
+    # query_vecs: [B, Q, D], doc_vecs: [B, P, D]
+    sims = torch.einsum("bqd,bpd->bqp", query_vecs, doc_vecs)
+    return sims.max(dim=-1).values.sum(dim=-1)

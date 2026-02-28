@@ -1,0 +1,110 @@
+{
+  "model": "google/gemma-3-12b-it",
+  "dtype": "bf16",
+  "device": "cuda",
+  "tokens_per_page": 64,
+  "trials_per_page": 2,
+  "pages_tested": [
+    2,
+    4,
+    6
+  ],
+  "load_sec": 13.183916568756104,
+  "overall_accuracy": 1.0,
+  "overall": {
+    "correct": 6,
+    "cases": 6
+  },
+  "by_pages": {
+    "2": {
+      "cases": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "4": {
+      "cases": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "6": {
+      "cases": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    }
+  },
+  "results": [
+    {
+      "num_pages": 2,
+      "target_page": 0,
+      "pred_page": 0,
+      "correct": true,
+      "scores": [
+        16.0,
+        12.4375
+      ]
+    },
+    {
+      "num_pages": 2,
+      "target_page": 0,
+      "pred_page": 0,
+      "correct": true,
+      "scores": [
+        15.875,
+        11.9375
+      ]
+    },
+    {
+      "num_pages": 4,
+      "target_page": 2,
+      "pred_page": 2,
+      "correct": true,
+      "scores": [
+        10.625,
+        10.375,
+        11.125,
+        10.5625
+      ]
+    },
+    {
+      "num_pages": 4,
+      "target_page": 1,
+      "pred_page": 1,
+      "correct": true,
+      "scores": [
+        11.5,
+        12.3125,
+        11.25,
+        10.9375
+      ]
+    },
+    {
+      "num_pages": 6,
+      "target_page": 1,
+      "pred_page": 1,
+      "correct": true,
+      "scores": [
+        11.3125,
+        12.25,
+        11.3125,
+        11.25,
+        10.9375,
+        10.5
+      ]
+    },
+    {
+      "num_pages": 6,
+      "target_page": 1,
+      "pred_page": 1,
+      "correct": true,
+      "scores": [
+        10.375,
+        12.3125,
+        11.1875,
+        11.1875,
+        11.125,
+        10.9375
+      ]
+    }
+  ],
+  "using_dummy": false
+}
