@@ -3,7 +3,7 @@
   "runName": "GemmPali Phase 1 Warmup",
   "logPath": "/tmp/gemmpali_phase1_full.log",
   "checkpointDir": "/home/nate/GemmPali/checkpoints/phase1",
-  "processPattern": "train_phase1_smoke.py",
+  "processPattern": "[t]rain_phase1_smoke.py",
   "maxSteps": 5000,
   "gpus": [3, 4],
   "refreshSeconds": 5
