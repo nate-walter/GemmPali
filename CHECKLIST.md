@@ -31,6 +31,11 @@ Updated: 2026-02-28
 - [ ] Implement temporal hard-negatives where layout is similar but values differ.
 - [ ] Add quality gates (dedupe, leakage, malformed records, class/domain balance).
 
+## Phase 1.5 — Distribution plan (locked)
+- [x] Training distribution plan updated: **start on GPUs 3+4 (2-GPU DDP)** for Phase 1 stability.
+- [x] Single-GPU fallback acknowledged (GPU 3 only) but not default.
+- [ ] Run 100-step Phase 1 smoke on 2-GPU plan.
+
 ## Phase 3 — Training pipeline
 - [ ] Add/author `train_gemmpali_phase2.py` (or equivalent) with DeepThink phase structure.
 - [ ] Add config for DeepSpeed ZeRO-3 + bf16 + grad checkpointing.

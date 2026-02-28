@@ -54,6 +54,13 @@ Canonical dataset plan is now locked to:
 
 (We are intentionally not using alternate MP-DocVQA/DUDE distributions unless explicitly re-approved.)
 
+## Distribution plan
+
+Phase 1 warmup default is now **2-GPU DDP on GPUs 3+4** for stability and throughput.
+
+- Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
+- Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
+
 ## Training philosophy
 
 To beat ColQwen at multi-page retrieval, GemmPali training emphasizes:
