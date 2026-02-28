@@ -55,7 +55,7 @@
       z-index: 2;
       max-width: 1400px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 14px;
     }
 
     .header {
@@ -67,7 +67,7 @@
     }
 
     .title {
-      font-size: 34px;
+      font-size: 28px;
       letter-spacing: 1px;
       color: var(--neon-aqua);
       text-shadow: 0 0 18px rgba(57,255,212,0.45);
@@ -79,7 +79,7 @@
     .status-pill {
       border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 7px 12px;
+      padding: 6px 10px;
       font-size: 12px;
       background: rgba(0,0,0,0.2);
     }
@@ -93,9 +93,9 @@
     .card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: 10px;
       box-shadow: inset 0 0 24px rgba(90, 40, 140, 0.25), 0 10px 40px rgba(0,0,0,0.35);
-      padding: 12px;
+      padding: 9px;
       backdrop-filter: blur(8px);
     }
 
@@ -113,14 +113,14 @@
     }
 
     .val {
-      font-size: 26px;
+      font-size: 20px;
       line-height: 1;
       font-weight: 700;
       color: var(--neon-pink);
       text-shadow: 0 0 18px rgba(255, 77, 207, 0.35);
     }
 
-    .small { font-size: 13px; color: var(--dim); margin-top: 7px; }
+    .small { font-size: 11px; color: var(--dim); margin-top: 5px; }
 
     .hint h3 { margin: 0 0 8px; font-size: 15px; color: var(--neon-gold); }
     .hint p { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
@@ -153,6 +153,21 @@
     @media (max-width: 1100px) {
       .kpi { grid-column: span 6; }
       .chart-wide, .chart-mid, .hint { grid-column: span 12; }
+      .title { font-size: 24px; }
+    }
+
+    @media (max-width: 700px) {
+      .wrap { padding: 10px; }
+      .header { grid-template-columns: 1fr; gap: 8px; }
+      .title { font-size: 20px; }
+      .subtitle { font-size: 11px; }
+      .status-pill { font-size: 11px; width: fit-content; }
+      .label { font-size: 10px; margin-bottom: 4px; }
+      .val { font-size: 16px; }
+      .small { font-size: 10px; }
+      .card { padding: 8px; }
+      .hint h3 { font-size: 13px; }
+      .hint p { font-size: 11px; line-height: 1.35; }
     }
   </style>
 </head>
@@ -174,7 +189,7 @@
 
       <div class="card chart-wide">
         <div class="label">Loss Trajectory + Rolling Averages</div>
-        <canvas id="lossChart" height="120"></canvas>
+        <canvas id="lossChart" height="90"></canvas>
       </div>
 
       <div class="card chart-mid">
@@ -205,16 +220,24 @@
       lossChart = new Chart(ctx, {
         type: 'line',
         data: { labels: [], datasets: [
-          { label: 'Loss', data: [], borderColor: '#ff4dcf', borderWidth: 2, pointRadius: 0, tension: 0.25 },
-          { label: 'Rolling-10', data: [], borderColor: '#39ffd4', borderWidth: 2, pointRadius: 0, tension: 0.25 },
-          { label: 'Rolling-50', data: [], borderColor: '#ffd54d', borderWidth: 2, pointRadius: 0, tension: 0.2 }
+          { label: 'Rolling-10', data: [], borderColor: '#39ffd4', borderWidth: 2.2, pointRadius: 0, tension: 0.2 },
+          { label: 'Rolling-50', data: [], borderColor: '#ffd54d', borderWidth: 2.2, pointRadius: 0, tension: 0.2 },
+          { label: 'Loss (raw)', data: [], borderColor: 'rgba(255,77,207,0.38)', borderWidth: 1, pointRadius: 0, tension: 0, hidden: true }
         ]},
         options: {
           maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#e7ebff' } } },
+          elements: { line: { cubicInterpolationMode: 'monotone' } },
+          plugins: { legend: { labels: { color: '#e7ebff', boxWidth: 10, font: { size: 11 } } } },
           scales: {
-            x: { ticks: { color: '#9aa1c7' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            y: { ticks: { color: '#9aa1c7' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            x: {
+              ticks: { color: '#9aa1c7', autoSkip: true, maxTicksLimit: 8 },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#9aa1c7' },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            }
           }
         }
       });
@@ -243,6 +266,12 @@
       }
     }
 
+    function sampleSeries(points, maxPoints = 140) {
+      if (!points || points.length <= maxPoints) return points || [];
+      const stride = Math.ceil(points.length / maxPoints);
+      return points.filter((_, i) => i % stride === 0 || i === points.length - 1);
+    }
+
     async function refresh() {
       const r = await fetch('/api/metrics');
       const j = await r.json();
@@ -255,11 +284,15 @@
       document.getElementById('latestCkpt').textContent = j.summary.latestCheckpoint ? `latest @ ${j.summary.latestCheckpoint.step}` : 'none';
       document.getElementById('spikeCount').textContent = j.summary.spikeCount || 0;
 
-      const labels = j.series.loss.map(p => p.step);
+      const sampledLoss = sampleSeries(j.series.loss, 130);
+      const labels = sampledLoss.map(p => p.step);
+      const r10 = new Map((j.series.rolling10 || []).map(p => [p.step, p.loss]));
+      const r50 = new Map((j.series.rolling50 || []).map(p => [p.step, p.loss]));
+
       lossChart.data.labels = labels;
-      lossChart.data.datasets[0].data = j.series.loss.map(p => p.loss);
-      lossChart.data.datasets[1].data = j.series.rolling10.map(p => p.loss);
-      lossChart.data.datasets[2].data = j.series.rolling50.map(p => p.loss);
+      lossChart.data.datasets[0].data = labels.map(step => r10.get(step) ?? null);
+      lossChart.data.datasets[1].data = labels.map(step => r50.get(step) ?? null);
+      lossChart.data.datasets[2].data = sampledLoss.map(p => p.loss);
       lossChart.update('none');
 
       renderGpu(j.gpus || []);
