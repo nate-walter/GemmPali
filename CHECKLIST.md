@@ -17,7 +17,7 @@ Updated: 2026-02-28
 - [x] Create canonical HDD dataset root for GemmPali training corpora.
 - [~] Download MP-DocVQA to HDD dataset root (AHS-uni split: corpus+qa; in progress).
 - [~] Download DUDE to HDD dataset root (AHS-uni split: corpus+qa; in progress).
-- [~] Confirm ViDoRe + DocVQA availability and normalize location map (vidore/colpali_train_set + vidore/docvqa_train download in progress).
+- [~] Confirm ViDoRe + DocVQA availability and normalize location map (locked: `vidore/colpali_train_set` + `vidore/docvqa_train`; corpus/query split IDs not present on HF).
 - [x] Record dataset provenance + SHAs in manifest.
 - [x] Document **mandatory** NVMe staging policy (copy-on-train preflight).
 
@@ -50,4 +50,5 @@ Updated: 2026-02-28
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
 - [x] Keep dataset manifest + provenance in `docs/datasets/`.
+- [x] Maintain exact DeepThink dataset lock file (`docs/datasets/EXACT_DEEPTHINK_DATASETS_LOCK.md`).
 - [x] Never reframe mission into domain-specialist tuning.
