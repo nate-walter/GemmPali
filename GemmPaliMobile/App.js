@@ -8,7 +8,7 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
-import Svg, { Polyline } from 'react-native-svg';
+import Svg, { Polyline, Line } from 'react-native-svg';
 
 const API_URL = 'http://10.46.150.108:3472/api/metrics';
 const REFRESH_MS = 5000;
@@ -57,23 +57,53 @@ function KPI({ label, value, sub, accent = '#46ffd8' }) {
   );
 }
 
-function SparkCard({ title, hint, values, color = '#46ffd8' }) {
-  const sampled = useMemo(() => smooth(sample(values, 48)), [values]);
-  const points = useMemo(() => toPolylinePoints(sampled), [sampled]);
+function SparkCard({ title, hint, series, color = '#46ffd8' }) {
+  const sampled = useMemo(() => sample(series || [], 48), [series]);
+  const sampledSteps = useMemo(() => sampled.map((p) => Number(p.step ?? 0)), [sampled]);
+  const sampledVals = useMemo(() => sampled.map((p) => Number(p.loss ?? 0)), [sampled]);
+  const smoothed = useMemo(() => smooth(sampledVals), [sampledVals]);
+  const points = useMemo(() => toPolylinePoints(smoothed), [smoothed]);
+
+  const min = smoothed.length ? Math.min(...smoothed) : 0;
+  const max = smoothed.length ? Math.max(...smoothed) : 0;
+  const mid = (min + max) / 2;
+  const xStart = sampledSteps.length ? sampledSteps[0] : 0;
+  const xEnd = sampledSteps.length ? sampledSteps[sampledSteps.length - 1] : 0;
+
+  const fmtAxis = (v) => Number(v || 0).toFixed(3);
 
   return (
     <View style={styles.chartCard}>
       <Text style={styles.chartTitle}>{title}</Text>
-      <Svg width="100%" height="110" viewBox="0 0 320 110">
-        <Polyline
-          points={points}
-          fill="none"
-          stroke={color}
-          strokeWidth="2.6"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      </Svg>
+
+      <View style={styles.chartBody}>
+        <View style={styles.yAxisCol}>
+          <Text style={styles.axisLabel}>{fmtAxis(max)}</Text>
+          <Text style={styles.axisLabel}>{fmtAxis(mid)}</Text>
+          <Text style={styles.axisLabel}>{fmtAxis(min)}</Text>
+        </View>
+
+        <View style={styles.plotCol}>
+          <Svg width="100%" height="110" viewBox="0 0 320 110">
+            <Line x1="0" y1="8" x2="320" y2="8" stroke="rgba(255,255,255,0.11)" strokeWidth="1" />
+            <Line x1="0" y1="55" x2="320" y2="55" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+            <Line x1="0" y1="102" x2="320" y2="102" stroke="rgba(255,255,255,0.11)" strokeWidth="1" />
+            <Polyline
+              points={points}
+              fill="none"
+              stroke={color}
+              strokeWidth="2.6"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </Svg>
+          <View style={styles.xAxisRow}>
+            <Text style={styles.axisLabel}>step {xStart}</Text>
+            <Text style={styles.axisLabel}>step {xEnd}</Text>
+          </View>
+        </View>
+      </View>
+
       <Text style={styles.hintText}>{hint}</Text>
     </View>
   );
@@ -109,9 +139,9 @@ export default function App() {
   }, [fetchMetrics]);
 
   const summary = data?.summary || {};
-  const rolling10 = (data?.series?.rolling10 || []).map((x) => x.loss);
-  const rolling50 = (data?.series?.rolling50 || []).map((x) => x.loss);
-  const rawLoss = (data?.series?.loss || []).map((x) => x.loss);
+  const rolling10 = data?.series?.rolling10 || [];
+  const rolling50 = data?.series?.rolling50 || [];
+  const rawLoss = data?.series?.loss || [];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -167,21 +197,21 @@ export default function App() {
 
         <SparkCard
           title="Trend Short (Rolling-10)"
-          values={rolling10}
+          series={rolling10}
           color="#46ffd8"
           hint="Near-term drift. Quick bumps are normal under hard negatives."
         />
 
         <SparkCard
           title="Trend Long (Rolling-50)"
-          values={rolling50}
+          series={rolling50}
           color="#ffd86a"
           hint="Structural trend. This is your truth line for stability."
         />
 
         <SparkCard
           title="Raw Loss (Hidden Noise Layer)"
-          values={rawLoss}
+          series={rawLoss}
           color="#ff62d8"
           hint="Noisy by design; use for anomaly detection, not macro judgment."
         />
@@ -290,6 +320,32 @@ const styles = StyleSheet.create({
     color: '#9ea5d3',
     fontSize: 10,
     lineHeight: 13,
+  },
+  chartBody: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginBottom: 2,
+  },
+  yAxisCol: {
+    width: 46,
+    justifyContent: 'space-between',
+    paddingRight: 4,
+    paddingTop: 2,
+    paddingBottom: 6,
+  },
+  plotCol: {
+    flex: 1,
+  },
+  xAxisRow: {
+    marginTop: -2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  axisLabel: {
+    color: '#7f88bc',
+    fontSize: 9,
+    fontVariant: ['tabular-nums'],
   },
   gpuCard: {
     borderWidth: 1,
