@@ -87,6 +87,12 @@ Source links:
 Archived copies included:
 - `docs/deepthink/deepthink-response-1.pdf`
 - `docs/deepthink/deepthink-response-2.pdf`
+- `docs/deepthink/deepthink-response-1.txt`
+- `docs/deepthink/deepthink-response-2.txt`
+
+Notable captured snippets from the imported DeepThink docs:
+- “MISSION ACCEPTED... massive, fundamental architectural flaw ... in dense multi-page retrieval.”
+- JSON contract recommendation (follow-up response): champion model path and explicit architecture patch plan / go-no-go structure.
 
 ## Why this matters
 
