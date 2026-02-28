@@ -23,6 +23,14 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 - Transition from prototype validation -> full SOTA training/eval campaign.
 - Primary dataset strategy now centered on open multi-page corpora with strict hard-negative training.
 
+### Dataset milestone (2026-02-28)
+- Exact DeepThink-locked 6-dataset set downloaded to HDD and stamped.
+- Final manifest snapshot:
+  - `/mnt/ripped_media/GemmPali/datasets/manifests/dataset_manifest_final_2026-02-28.json`
+- Phase 1 NVMe staging completed (strict payload only):
+  - `vidore-colpali-train-set` (~50G)
+  - `vidore-docvqa-train` (~6.7G)
+
 ## Dataset policy (critical)
 
 ### HDD-first storage policy

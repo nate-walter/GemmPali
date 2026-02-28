@@ -15,11 +15,13 @@ Updated: 2026-02-28
 
 ## Phase 1 — Dataset acquisition (HDD-first)
 - [x] Create canonical HDD dataset root for GemmPali training corpora.
-- [~] Download MP-DocVQA to HDD dataset root (AHS-uni split: corpus+qa; in progress).
-- [~] Download DUDE to HDD dataset root (AHS-uni split: corpus+qa; in progress).
-- [~] Confirm ViDoRe + DocVQA availability and normalize location map (locked: `vidore/colpali_train_set` + `vidore/docvqa_train`; corpus/query split IDs not present on HF).
+- [x] Download MP-DocVQA to HDD dataset root (AHS-uni split: corpus+qa complete).
+- [x] Download DUDE to HDD dataset root (AHS-uni split: corpus+qa complete).
+- [x] Confirm ViDoRe + DocVQA availability and normalize location map (locked: `vidore/colpali_train_set` + `vidore/docvqa_train`; corpus/query split IDs not present on HF).
 - [x] Record dataset provenance + SHAs in manifest.
+- [x] Stamp final dataset manifest snapshot (`dataset_manifest_final_2026-02-28.json`).
 - [x] Document **mandatory** NVMe staging policy (copy-on-train preflight).
+- [x] Run Phase 1 NVMe staging (only `vidore-colpali-train-set` + `vidore-docvqa-train`).
 
 ## Phase 2 — Data contract + preprocessing
 - [ ] Define canonical schema: `[query, image_sequence, target_page_idx, hard_negatives...]`.
