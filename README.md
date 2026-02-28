@@ -67,7 +67,7 @@ Current run profile:
 - 4-bit backbone loading + frozen-backbone no-grad forward
 - train head path with checkpoint saves every 500 steps
 - initial full warmup target: 5000 steps
-- status: full run is active on GPUs 3+4; first checkpoint saved at `checkpoints/phase1/head_step_0000500.pt`
+- status: Phase 1 full warmup completed at 5000/5000 with checkpoints through `checkpoints/phase1/head_step_0005000.pt`
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
@@ -85,6 +85,28 @@ To beat ColQwen at multi-page retrieval, GemmPali training emphasizes:
 No single-domain overfitting claims.
 
 Head-to-head success must be demonstrated on mixed-domain multi-page retrieval tasks with apples-to-apples controls and explicit cross-page metrics.
+
+## GemmPali dashboard (new)
+
+A dedicated cyberpunk training dashboard now exists under:
+- `dashboard/` (Express backend + neon frontend)
+
+### What it tracks
+- live step/loss stream from run log
+- rolling-10 and rolling-50 loss curves
+- checkpoint cadence + latest checkpoint
+- spike count and low-loss streak
+- GPU 3/4 utilization, memory, temperature, power
+- run status (active / completed / idle)
+
+### Fast changeability (for crashes/restarts)
+- Edit `dashboard/config/run.json` for log path, checkpoint dir, process pattern, max steps, and target GPUs.
+- No frontend rebuild needed for path changes — backend reads config each request.
+
+### One-command control
+- Start: `scripts/start_gemmpali_dashboard.sh`
+- Stop: `scripts/stop_gemmpali_dashboard.sh`
+- Default URL: `http://10.46.150.108:3472`
 
 ## Key reports
 

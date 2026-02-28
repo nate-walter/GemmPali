@@ -36,7 +36,7 @@ Updated: 2026-02-28
 - [x] Training distribution plan updated: **start on GPUs 3+4 (2-GPU DDP)** for Phase 1 stability.
 - [x] Single-GPU fallback acknowledged (GPU 3 only) but not default.
 - [x] Run 100-step Phase 1 smoke on 2-GPU plan.
-- [~] Launch full Phase 1 warmup run on GPUs 3+4 (in progress; passed 100-step smoke, full 5k run active, first checkpoint `head_step_0000500.pt` saved).
+- [x] Launch full Phase 1 warmup run on GPUs 3+4 (completed 5k/5k; checkpoints saved every 500 through `head_step_0005000.pt`).
 
 ## Phase 3 — Training pipeline
 - [ ] Add/author `train_gemmpali_phase2.py` (or equivalent) with DeepThink phase structure.
@@ -53,6 +53,12 @@ Updated: 2026-02-28
 - [ ] Track: Hit@k, MRR, NDCG, latency, VRAM, CPCR-like cross-page consistency.
 - [ ] Add failure taxonomy + remediation loop.
 - [ ] Produce scoreboard artifacts and reproducible run cards.
+
+## Phase 1.6 — Observability / dashboard
+- [x] Build dedicated GemmPali metrics dashboard with cyberpunk UI and metric hints.
+- [x] Parse live run telemetry from sigma logs + checkpoints + GPU 3/4 runtime stats.
+- [x] Add fast-change config file (`dashboard/config/run.json`) for path/process edits during crashes/restarts.
+- [x] Add one-command start/stop scripts for quick spin-up.
 
 ## Ops / guardrails
 - [x] Check in after each major step.
