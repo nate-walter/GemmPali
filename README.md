@@ -111,8 +111,12 @@ A dedicated cyberpunk training dashboard now exists under:
 
 ### iPhone app (Expo)
 - Directory: `GemmPaliMobile/`
-- Start dev server: `cd GemmPaliMobile && npx expo start`
+- Start dev server: `cd GemmPaliMobile && npx expo start --lan --clear`
 - iOS app uses the same backend API (`http://10.46.150.108:3472/api/metrics`) with ATS relaxed in `app.json` for LAN HTTP.
+- ✅ Working launch flow (confirmed):
+  1. Copy Expo URL from terminal (`exp://<LAN-IP>:8081`)
+  2. Paste URL into Safari on iPhone
+  3. Tap **Open in Expo Go**
 
 ## Key reports
 

@@ -63,6 +63,7 @@ Updated: 2026-02-28
 
 ## Ops / guardrails
 - [x] Check in after each major step.
+- [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
 - [x] Keep dataset manifest + provenance in `docs/datasets/`.
