@@ -59,6 +59,7 @@ Updated: 2026-02-28
 - [x] Parse live run telemetry from sigma logs + checkpoints + GPU 3/4 runtime stats.
 - [x] Add fast-change config file (`dashboard/config/run.json`) for path/process edits during crashes/restarts.
 - [x] Add one-command start/stop scripts for quick spin-up.
+- [x] Build companion iPhone Expo app (`GemmPaliMobile`) with compact KPI cards + smooth horizontal trend lines.
 
 ## Ops / guardrails
 - [x] Check in after each major step.

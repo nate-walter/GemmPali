@@ -1,0 +1,15 @@
+# Node / Expo
+node_modules/
+**/node_modules/
+.expo/
+.expo-shared/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Dashboard runtime pid/log
+/tmp/gemmpali_dashboard*.pid
+/tmp/gemmpali_dashboard*.log

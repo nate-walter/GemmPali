@@ -90,6 +90,7 @@ Head-to-head success must be demonstrated on mixed-domain multi-page retrieval t
 
 A dedicated cyberpunk training dashboard now exists under:
 - `dashboard/` (Express backend + neon frontend)
+- `GemmPaliMobile/` (Expo iPhone app for compact mobile telemetry)
 
 ### What it tracks
 - live step/loss stream from run log
@@ -107,6 +108,11 @@ A dedicated cyberpunk training dashboard now exists under:
 - Start: `scripts/start_gemmpali_dashboard.sh`
 - Stop: `scripts/stop_gemmpali_dashboard.sh`
 - Default URL: `http://10.46.150.108:3472`
+
+### iPhone app (Expo)
+- Directory: `GemmPaliMobile/`
+- Start dev server: `cd GemmPaliMobile && npx expo start`
+- iOS app uses the same backend API (`http://10.46.150.108:3472/api/metrics`) with ATS relaxed in `app.json` for LAN HTTP.
 
 ## Key reports
 
