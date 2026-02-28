@@ -99,9 +99,9 @@
       backdrop-filter: blur(8px);
     }
 
-    .kpi { grid-column: span 3; }
-    .chart-wide { grid-column: span 8; }
-    .chart-mid { grid-column: span 4; }
+    .kpi { grid-column: span 3; min-height: 72px; }
+    .chart-wide { grid-column: span 12; }
+    .chart-mid { grid-column: span 12; }
     .hint { grid-column: span 4; }
 
     .label {
@@ -113,21 +113,21 @@
     }
 
     .val {
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1;
       font-weight: 700;
       color: var(--neon-pink);
       text-shadow: 0 0 18px rgba(255, 77, 207, 0.35);
     }
 
-    .small { font-size: 11px; color: var(--dim); margin-top: 5px; }
+    .small { font-size: 10px; color: var(--dim); margin-top: 4px; }
 
     .hint h3 { margin: 0 0 8px; font-size: 15px; color: var(--neon-gold); }
     .hint p { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
 
     .gpu-strip {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0,1fr));
       gap: 8px;
     }
 
@@ -151,7 +151,7 @@
     }
 
     @media (max-width: 1100px) {
-      .kpi { grid-column: span 6; }
+      .kpi { grid-column: span 3; }
       .chart-wide, .chart-mid, .hint { grid-column: span 12; }
       .title { font-size: 24px; }
     }
@@ -163,9 +163,9 @@
       .subtitle { font-size: 11px; }
       .status-pill { font-size: 11px; width: fit-content; }
       .label { font-size: 10px; margin-bottom: 4px; }
-      .val { font-size: 16px; }
+      .val { font-size: 14px; }
       .small { font-size: 10px; }
-      .card { padding: 8px; }
+      .card { padding: 7px; }
       .hint h3 { font-size: 13px; }
       .hint p { font-size: 11px; line-height: 1.35; }
     }
@@ -189,7 +189,7 @@
 
       <div class="card chart-wide">
         <div class="label">Loss Trajectory + Rolling Averages</div>
-        <canvas id="lossChart" height="90"></canvas>
+        <canvas id="lossChart" height="64"></canvas>
       </div>
 
       <div class="card chart-mid">
@@ -220,9 +220,9 @@
       lossChart = new Chart(ctx, {
         type: 'line',
         data: { labels: [], datasets: [
-          { label: 'Rolling-10', data: [], borderColor: '#39ffd4', borderWidth: 2.2, pointRadius: 0, tension: 0.2 },
-          { label: 'Rolling-50', data: [], borderColor: '#ffd54d', borderWidth: 2.2, pointRadius: 0, tension: 0.2 },
-          { label: 'Loss (raw)', data: [], borderColor: 'rgba(255,77,207,0.38)', borderWidth: 1, pointRadius: 0, tension: 0, hidden: true }
+          { label: 'Trend-Short', data: [], borderColor: '#39ffd4', borderWidth: 2.3, pointRadius: 0, tension: 0.32 },
+          { label: 'Trend-Long', data: [], borderColor: '#ffd54d', borderWidth: 2.3, pointRadius: 0, tension: 0.35 },
+          { label: 'Loss (raw)', data: [], borderColor: 'rgba(255,77,207,0.22)', borderWidth: 0.8, pointRadius: 0, tension: 0, hidden: true }
         ]},
         options: {
           maintainAspectRatio: false,
@@ -230,12 +230,12 @@
           plugins: { legend: { labels: { color: '#e7ebff', boxWidth: 10, font: { size: 11 } } } },
           scales: {
             x: {
-              ticks: { color: '#9aa1c7', autoSkip: true, maxTicksLimit: 8 },
+              ticks: { color: '#9aa1c7', autoSkip: true, maxTicksLimit: 6, font: { size: 10 } },
               grid: { color: 'rgba(255,255,255,0.05)' }
             },
             y: {
               beginAtZero: true,
-              ticks: { color: '#9aa1c7' },
+              ticks: { color: '#9aa1c7', font: { size: 10 } },
               grid: { color: 'rgba(255,255,255,0.05)' }
             }
           }
@@ -266,10 +266,23 @@
       }
     }
 
-    function sampleSeries(points, maxPoints = 140) {
+    function sampleSeries(points, maxPoints = 75) {
       if (!points || points.length <= maxPoints) return points || [];
       const stride = Math.ceil(points.length / maxPoints);
       return points.filter((_, i) => i % stride === 0 || i === points.length - 1);
+    }
+
+
+    function smoothSeries(vals, alpha = 0.22) {
+      if (!vals.length) return vals;
+      const out = [];
+      let prev = vals[0] ?? 0;
+      for (const v of vals) {
+        const cur = (v ?? prev);
+        prev = alpha * cur + (1 - alpha) * prev;
+        out.push(Number(prev.toFixed(6)));
+      }
+      return out;
     }
 
     async function refresh() {
@@ -284,14 +297,19 @@
       document.getElementById('latestCkpt').textContent = j.summary.latestCheckpoint ? `latest @ ${j.summary.latestCheckpoint.step}` : 'none';
       document.getElementById('spikeCount').textContent = j.summary.spikeCount || 0;
 
-      const sampledLoss = sampleSeries(j.series.loss, 130);
+      const sampledLoss = sampleSeries(j.series.loss, 75);
       const labels = sampledLoss.map(p => p.step);
       const r10 = new Map((j.series.rolling10 || []).map(p => [p.step, p.loss]));
       const r50 = new Map((j.series.rolling50 || []).map(p => [p.step, p.loss]));
 
+      const shortRaw = labels.map(step => r10.get(step) ?? null);
+      const longRaw = labels.map(step => r50.get(step) ?? null);
+      const shortSmooth = smoothSeries(shortRaw, 0.24);
+      const longSmooth = smoothSeries(longRaw, 0.18);
+
       lossChart.data.labels = labels;
-      lossChart.data.datasets[0].data = labels.map(step => r10.get(step) ?? null);
-      lossChart.data.datasets[1].data = labels.map(step => r50.get(step) ?? null);
+      lossChart.data.datasets[0].data = shortSmooth;
+      lossChart.data.datasets[1].data = longSmooth;
       lossChart.data.datasets[2].data = sampledLoss.map(p => p.loss);
       lossChart.update('none');
 
