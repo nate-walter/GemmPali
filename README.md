@@ -1,92 +1,68 @@
-# GemmPali (Multi-Page Gemma Retrieval Prototype)
+# GemmPali (Multi-Page Gemma Retrieval Program)
 
-**GemmPali** (two Ms = Multi-page) is a reproducible prototype showing that a US VLM stack (Gemma 3 12B) can be patched and verified for **multi-page retrieval behavior**.
+GemmPali is a Gemma-based multi-page retrieval system pursuing **general-document** SOTA in ColPali-style indexing/retrieval.
 
-## What this repo contains
+## Mission statement
 
-- `src/`
-  - `model_wrapper.py` (patched wrapper wiring)
-  - `masks.py` (doc-index omni mask + query causal mask)
-  - `retriever_head.py` (pool + 128D projection + L2 normalize)
-  - `rope3d.py` (Volumetric3DRoPE scaffold hook)
-- `scripts/`
-  - `smoke_forward.py` (forward-pass smoke)
-  - `multipage_probe_test.py` (multi-page retrieval verification harness)
-- `configs/`
-  - `exp_A.yaml`, `exp_B.yaml`, `exp_C.yaml`
-- `docs/verification/`
-  - JSON evidence from successful runs
-- `docs/deepthink/`
-  - DeepThink docs that guided the implementation (PDF exports)
-- `environment/`
-  - `.env.example`
-  - `requirements-freeze.txt`
+GemmPali is **not a CGI-specialist model**.
 
-## Upstream implementation repo
+Our objective is broad multi-page dominance vs ColQwen across diverse document regimes (reports, technical docs, forms, layouts, cross-page tables/charts), with CGI annual reports used only as one supplemental stress domain.
 
-Primary implementation landed in:
+## Current status
 
-- `nate-walter/colpali-us-vlm-multipage` (branch: `main`)
-- Commit: `cddd8ea`
-- Commit title: `feat: DeepThink multi-page patch + GemPali verification harness`
+### Completed
+- DeepThink-driven patch path is implemented and running:
+  - doc/query mask split
+  - retriever head pooling + 128D + L2
+  - 3D-RoPE scaffold integration
+  - wrapper wiring + dtype consistency
+- Multi-page behavior validated in non-dummy path.
+- Fresh-repo re-verification passed from clean checkout/venv.
 
-## Reproduction
+### Active program
+- Transition from prototype validation -> full SOTA training/eval campaign.
+- Primary dataset strategy now centered on open multi-page corpora with strict hard-negative training.
 
-### 1) Environment
+## Dataset policy (critical)
 
-- Python 3.10.x
-- Install deps from `environment/requirements-freeze.txt`
+### HDD-first storage policy
+All training corpora are stored under HDD roots for space management and reproducibility.
 
-### 2) GPU pinning
+- Long-term datasets: **HDD only**
+- NVMe usage: **ad-hoc copy/stage only when actively training**
+- After training run: clear staged NVMe copies unless explicitly retained
 
-Use free GPU explicitly:
+This policy is non-negotiable for operational stability.
 
-```bash
-export CUDA_VISIBLE_DEVICES=3
-export PYTHONPATH=.
-```
+## Dataset strategy baseline
 
-### 3) Run deepthink smoke checks
+We currently plan around:
+- ViDoRe
+- DocVQA
+- MP-DocVQA (to add/download)
+- DUDE (to add/download)
+- Internal CGI annual-report corpus (supplemental stress domain, not central identity)
 
-```bash
-python scripts/smoke_forward.py \
-  --model google/gemma-3-12b-it \
-  --dtype bf16 \
-  --seq-len 64 \
-  --pages 4 \
-  --batch-size 1 \
-  --allow-dummy \
-  --out docs/verification/deepthink_patch_gpu3_p4_seq64.json
-```
+## Training philosophy
 
-### 4) Run GemmPali multi-page verification harness
+To beat ColQwen at multi-page retrieval, GemmPali training emphasizes:
+- cross-page continuity routing,
+- strict in-document hard negatives,
+- temporal/value-sensitive negatives for similar layouts,
+- measurable multi-page consistency metrics.
 
-```bash
-python scripts/multipage_probe_test.py \
-  --model google/gemma-3-12b-it \
-  --dtype bf16 \
-  --tokens-per-page 64 \
-  --trials 2 \
-  --pages 2 4 6 \
-  --out docs/verification/multipage_probe_report_gpu3.json
-```
+## Evaluation philosophy
 
-## Key result
+No single-domain overfitting claims.
 
-From `docs/verification/multipage_probe_report_gpu3.json`:
+Head-to-head success must be demonstrated on mixed-domain multi-page retrieval tasks with apples-to-apples controls and explicit cross-page metrics.
 
-- `using_dummy = false`
-- overall accuracy = **1.0 (6/6)**
-- page-level:
-  - 2 pages: 100%
-  - 4 pages: 100%
-  - 6 pages: 100%
+## Key reports
 
-## Source links
+- `reports/DeepThink-Prompt-GemmPali-SOTA-MultiPage-Training-2026-02-28.md`
+- `reports/DeepThink-Response-GemmPali-SOTA-MultiPage-2026-02-28.txt`
+- `reports/GemmPali-Accomplishment-Report-2026-02-28.md`
 
-- DeepThink shared conversation:
-  - https://g.co/gemini/share/cc72325be710
-- DeepThink response doc #1:
-  - https://docs.google.com/document/d/1szArxsvLtTvj37d7lbFudaRS7RLm3e6NVmX3xqaZFa0/edit?usp=drivesdk
-- DeepThink response doc #2:
-  - https://docs.google.com/document/d/1tg-b5t41aMj3XDR0NSzN26dItvZh5BEKpMkkEpN6hSs/edit?usp=drivesdk
+## Operational checklist
+
+See `CHECKLIST.md` for the active execution plan and gates.
