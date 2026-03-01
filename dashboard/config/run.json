@@ -9,5 +9,6 @@
     3,
     4
   ],
-  "refreshSeconds": 5
+  "refreshSeconds": 5,
+  "defaultLr": 0.0001
 }

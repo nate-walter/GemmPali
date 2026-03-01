@@ -93,7 +93,9 @@ A dedicated cyberpunk training dashboard now exists under:
 - `GemmPaliMobile/` (Expo iPhone app for compact mobile telemetry)
 
 ### What it tracks
-- live step/loss stream from run log
+- live train loss stream from run log
+- eval loss (when run logging includes eval passes)
+- learning rate and grad norm (when run logging includes optimizer telemetry)
 - rolling-10 and rolling-50 loss curves
 - checkpoint cadence + latest checkpoint
 - spike count and low-loss streak

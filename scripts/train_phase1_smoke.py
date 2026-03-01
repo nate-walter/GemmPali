@@ -37,6 +37,8 @@ def main():
     ap.add_argument("--load-in-4bit", action="store_true")
     ap.add_argument("--save-dir", default="checkpoints/phase1")
     ap.add_argument("--save-every", type=int, default=500)
+    ap.add_argument("--eval-every", type=int, default=100)
+    ap.add_argument("--eval-batches", type=int, default=2)
     args = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -55,6 +57,10 @@ def main():
     rows = load_jsonl(args.pairs)
     if not rows:
         raise RuntimeError("No training rows")
+
+    eval_holdout = min(max(256, len(rows)//20), max(1, len(rows)-1)) if len(rows) > 512 else max(1, len(rows)//10)
+    train_rows = rows[:-eval_holdout] if len(rows) > eval_holdout else rows
+    eval_rows = rows[-eval_holdout:] if len(rows) > eval_holdout else rows
 
     wrapper = MultiPageRetrieverWrapper(
         WrapperConfig(
@@ -80,9 +86,15 @@ def main():
     opt = torch.optim.AdamW(params, lr=args.lr)
 
     # shard rows by rank
-    my_rows = rows[local_rank::world_size]
+    my_rows = train_rows[local_rank::world_size]
     if not my_rows:
-        my_rows = rows
+        my_rows = train_rows
+
+    my_eval_rows = eval_rows[local_rank::world_size]
+    if not my_eval_rows:
+        my_eval_rows = eval_rows
+
+    last_eval_loss = None
 
     for step in range(1, args.steps + 1):
         r = my_rows[(step - 1) % len(my_rows)]
@@ -111,11 +123,40 @@ def main():
 
         opt.zero_grad(set_to_none=True)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(params, 1.0)
+        grad_norm = torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
 
+        if step % args.eval_every == 0:
+            with torch.no_grad():
+                eval_losses = []
+                for bi in range(max(1, args.eval_batches)):
+                    er = my_eval_rows[(step + bi) % len(my_eval_rows)]
+                    e_batch = [er, random.choice(my_eval_rows)]
+                    q_texts_e = [x.get("query", "") for x in e_batch]
+                    d_texts_e = [x.get("query", "") + " \n " + (x.get("answer", "") or "") for x in e_batch]
+                    q_ids_e = tokenizer(q_texts_e, padding=True, truncation=True, max_length=args.max_len, return_tensors="pt").input_ids.to(device)
+                    d_ids_e = tokenizer(d_texts_e, padding=True, truncation=True, max_length=args.max_len, return_tensors="pt").input_ids.to(device)
+                    with torch.autocast(device_type="cuda", dtype=dtype if dtype != torch.float32 else torch.bfloat16, enabled=(dtype != torch.float32)):
+                        qv = model.module(q_ids_e, is_document_indexing=False)
+                        dv = model.module(d_ids_e, is_document_indexing=True)
+                        qe = mean_pool(qv)
+                        de = mean_pool(dv)
+                        sims_e = torch.matmul(qe, de.T)
+                        labels_e = torch.arange(sims_e.size(0), device=device)
+                        e_loss = torch.nn.functional.cross_entropy(sims_e / 0.05, labels_e)
+                    eval_losses.append(e_loss.detach())
+
+                eval_loss_local = torch.stack(eval_losses).mean()
+                eval_loss_global = eval_loss_local.clone()
+                dist.all_reduce(eval_loss_global, op=dist.ReduceOp.SUM)
+                eval_loss_global = eval_loss_global / world_size
+                last_eval_loss = float(eval_loss_global.item())
+
         if step % args.log_every == 0 and local_rank == 0:
-            print(f"step={step} loss={loss.item():.4f}", flush=True)
+            lr_now = float(opt.param_groups[0].get("lr", 0.0))
+            grad_now = float(grad_norm.item() if hasattr(grad_norm, "item") else grad_norm)
+            eval_str = f"{last_eval_loss:.4f}" if last_eval_loss is not None else "na"
+            print(f"step={step} loss={loss.item():.4f} eval_loss={eval_str} grad_norm={grad_now:.4f} lr={lr_now:.8f}", flush=True)
 
         if local_rank == 0 and step % args.save_every == 0:
             sdir = Path(args.save_dir)

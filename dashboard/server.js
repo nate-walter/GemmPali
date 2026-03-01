@@ -32,15 +32,20 @@ function safeExec(cfg, cmd) {
   }
 }
 
-function parseLog(logText) {
+function parseLog(logText, defaultLr = null) {
   const steps = [];
   const checkpoints = [];
   let completed = false;
 
   for (const line of logText.split('\n')) {
-    const m = line.match(/step=(\d+)\s+loss=([0-9.]+)/);
+    const m = line.match(/step=(\d+)\s+loss=([0-9.]+)(?:\s+eval_loss=([0-9.naNA-]+))?(?:\s+grad_norm=([0-9.eE+-]+))?(?:\s+lr=([0-9.eE+-]+))?/);
     if (m) {
-      steps.push({ step: Number(m[1]), loss: Number(m[2]) });
+      const evalRaw = m[3];
+      const evalLoss = evalRaw && !/^na$/i.test(evalRaw) ? Number(evalRaw) : null;
+      const gradNorm = m[4] != null ? Number(m[4]) : null;
+      let lr = m[5] != null ? Number(m[5]) : null;
+      if (lr == null && defaultLr != null) lr = Number(defaultLr);
+      steps.push({ step: Number(m[1]), loss: Number(m[2]), evalLoss, gradNorm, lr });
       continue;
     }
     const c = line.match(/checkpoint_saved=(.+head_step_(\d+)\.pt)/);
@@ -76,6 +81,9 @@ function stats(points) {
       p95Loss: null,
       spikeCount: 0,
       lowLossStreak: 0,
+      latestEvalLoss: null,
+      latestGradNorm: null,
+      latestLr: null,
     };
   }
 
@@ -100,6 +108,9 @@ function stats(points) {
     p95Loss: p95,
     spikeCount,
     lowLossStreak,
+    latestEvalLoss: latest.evalLoss ?? null,
+    latestGradNorm: latest.gradNorm ?? null,
+    latestLr: latest.lr ?? null,
   };
 }
 
@@ -135,7 +146,7 @@ app.get('/api/metrics', (_req, res) => {
   const gpuText = safeExec(cfg, gpuCmd);
   const mtime = safeExec(cfg, mtimeCmd).trim();
 
-  const parsed = parseLog(logText);
+  const parsed = parseLog(logText, cfg.defaultLr ?? null);
   const roll10 = rollingAvg(parsed.steps, 10);
   const roll50 = rollingAvg(parsed.steps, 50);
   const s = stats(parsed.steps);
@@ -165,6 +176,9 @@ app.get('/api/metrics', (_req, res) => {
       p95Loss: s.p95Loss,
       spikeCount: s.spikeCount,
       lowLossStreak: s.lowLossStreak,
+      latestEvalLoss: s.latestEvalLoss,
+      latestGradNorm: s.latestGradNorm,
+      latestLr: s.latestLr,
       checkpointCount: checkpoints.length,
       latestCheckpoint: checkpoints.length ? checkpoints[checkpoints.length - 1] : null,
     },
@@ -172,6 +186,9 @@ app.get('/api/metrics', (_req, res) => {
       loss: parsed.steps,
       rolling10: roll10,
       rolling50: roll50,
+      evalLoss: parsed.steps.filter(p => p.evalLoss != null).map(p => ({ step: p.step, loss: p.evalLoss })),
+      gradNorm: parsed.steps.filter(p => p.gradNorm != null).map(p => ({ step: p.step, loss: p.gradNorm })),
+      lr: parsed.steps.filter(p => p.lr != null).map(p => ({ step: p.step, loss: p.lr })),
       checkpoints,
     },
     gpus: parseGpu(gpuText).filter(g => cfg.gpus.includes(g.index)),

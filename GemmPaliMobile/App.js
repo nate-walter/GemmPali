@@ -139,9 +139,10 @@ export default function App() {
   }, [fetchMetrics]);
 
   const summary = data?.summary || {};
-  const rolling10 = data?.series?.rolling10 || [];
-  const rolling50 = data?.series?.rolling50 || [];
-  const rawLoss = data?.series?.loss || [];
+  const trainLossSeries = data?.series?.loss || [];
+  const evalLossSeries = data?.series?.evalLoss || [];
+  const gradNormSeries = data?.series?.gradNorm || [];
+  const lrSeries = data?.series?.lr || [];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -176,44 +177,63 @@ export default function App() {
             accent="#46ffd8"
           />
           <KPI
-            label="Loss"
+            label="Train Loss"
             value={summary.latestLoss != null ? Number(summary.latestLoss).toFixed(4) : '-'}
-            sub="current pulse"
+            sub="optimization pulse"
             accent="#ff62d8"
+          />
+          <KPI
+            label="Eval Loss"
+            value={summary.latestEvalLoss != null ? Number(summary.latestEvalLoss).toFixed(4) : 'N/A'}
+            sub={summary.latestEvalLoss != null ? 'holdout check' : 'not logged in this run'}
+            accent="#ffd86a"
+          />
+          <KPI
+            label="Grad Norm"
+            value={summary.latestGradNorm != null ? Number(summary.latestGradNorm).toFixed(4) : 'N/A'}
+            sub={summary.latestGradNorm != null ? 'update stability' : 'not logged in this run'}
+            accent="#b489ff"
+          />
+          <KPI
+            label="Learning Rate"
+            value={summary.latestLr != null ? Number(summary.latestLr).toFixed(6) : 'N/A'}
+            sub="optimizer step size"
+            accent="#8cf9ff"
           />
           <KPI
             label="Checkpoints"
             value={summary.checkpointCount ?? '-'}
             sub={`latest @ ${summary.latestCheckpoint?.step ?? '-'}`}
-            accent="#ffd86a"
-          />
-          <KPI
-            label="Spikes"
-            value={summary.spikeCount ?? '-'}
-            sub="loss > 0.10"
-            accent="#b489ff"
+            accent="#a4ff9f"
           />
         </View>
 
         <SparkCard
-          title="Trend Short (Rolling-10)"
-          series={rolling10}
-          color="#46ffd8"
-          hint="Near-term drift. Quick bumps are normal under hard negatives."
-        />
-
-        <SparkCard
-          title="Trend Long (Rolling-50)"
-          series={rolling50}
-          color="#ffd86a"
-          hint="Structural trend. This is your truth line for stability."
-        />
-
-        <SparkCard
-          title="Raw Loss (Hidden Noise Layer)"
-          series={rawLoss}
+          title="Train Loss"
+          series={trainLossSeries}
           color="#ff62d8"
-          hint="Noisy by design; use for anomaly detection, not macro judgment."
+          hint="Core optimization objective. Trend down = retrieval head learning better alignment."
+        />
+
+        <SparkCard
+          title="Eval Loss"
+          series={evalLossSeries}
+          color="#ffd86a"
+          hint="Holdout generalization signal. Flat/down is good; sharp divergence vs train means overfit risk."
+        />
+
+        <SparkCard
+          title="Grad Norm"
+          series={gradNormSeries}
+          color="#b489ff"
+          hint="Update magnitude stability. Spikes suggest turbulence; too-flat may indicate learning stall."
+        />
+
+        <SparkCard
+          title="Learning Rate"
+          series={lrSeries}
+          color="#46ffd8"
+          hint="Optimizer step size schedule over time. Useful when warmup/decay are enabled."
         />
 
         <View style={styles.gpuCard}>
