@@ -142,7 +142,9 @@ Immediate follow-up long-horizon run is locked as `phase2_run3`:
 
 A dedicated cyberpunk training dashboard now exists under:
 - `dashboard/` (Express backend + neon frontend)
-- `GemmPaliMobile/` (Expo iPhone app for compact mobile telemetry)
+- `GemmPaliMobile/` (Expo iPhone app for compact GemmPali telemetry)
+- `colqwen-dashboard/` (separate dashboard API/frontend for ColQwen CGI Monster run)
+- `ColQwenMonsterOpsMobile/` (Expo iPhone app themed for ColQwen Monster telemetry)
 
 ### What it tracks
 - live train loss stream from run log
@@ -171,6 +173,16 @@ A dedicated cyberpunk training dashboard now exists under:
   1. Copy Expo URL from terminal (`exp://<LAN-IP>:8081`)
   2. Paste URL into Safari on iPhone
   3. Tap **Open in Expo Go**
+
+
+### ColQwen dashboard + iPhone app
+- Dashboard URL: `http://10.46.150.108:3473`
+- Dashboard scripts:
+  - Start: `scripts/start_colqwen_dashboard.sh`
+  - Stop: `scripts/stop_colqwen_dashboard.sh`
+- Mobile app directory: `ColQwenMonsterOpsMobile/`
+- Start dev server: `cd ColQwenMonsterOpsMobile && npx expo start --lan --clear`
+- Open on iPhone: paste `exp://<LAN-IP>:8081` into Safari and tap **Open in Expo Go**
 
 ## Key reports
 

@@ -77,7 +77,9 @@ Updated: 2026-02-28
 - [x] Parse live run telemetry from sigma logs + checkpoints + GPU 3/4 runtime stats.
 - [x] Add fast-change config file (`dashboard/config/run.json`) for path/process edits during crashes/restarts.
 - [x] Add one-command start/stop scripts for quick spin-up.
+- [x] Added dedicated ColQwen dashboard start/stop scripts (`start_colqwen_dashboard.sh`, `stop_colqwen_dashboard.sh`).
 - [x] Build companion iPhone Expo app (`GemmPaliMobile`) with compact KPI cards + smooth horizontal trend lines.
+- [x] Copy/retheme a separate ColQwen app (`ColQwenMonsterOpsMobile`) with independent API target.
 - [x] Add axis-labeled mobile charts and expanded metrics panels for train loss, eval loss, learning rate, and grad norm (telemetry appears when run logs include those fields).
 
 ## Ops / guardrails

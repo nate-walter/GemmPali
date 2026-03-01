@@ -1,0 +1,13 @@
+{
+  "host": "sigma",
+  "runName": "ColQwen2.5 CGI Monster v2 7K Recovery",
+  "logPath": "/tmp/cgi_monster_colqwen25_v2_7k_recovery_normfix_v1.log",
+  "checkpointDir": "/home/nate/ColPali/upgrading_team_qdrant_colpali_NBs/training/runs/cgi_monster_colqwen25_v2_7k_recovery_normfix_v1",
+  "processPattern": "[t]rain_cgi_colqwen_expert.py.*cgi_monster_colqwen25_v2_7k_recovery_normfix_v1",
+  "maxSteps": 5000,
+  "gpus": [
+    0
+  ],
+  "refreshSeconds": 5,
+  "defaultLr": 1e-05
+}
