@@ -72,6 +72,7 @@ Current run profile:
 - status:
   - Phase 1 run1 completed at 5000/5000 (active dir retains best: `head_step_0003000.pt`, `head_step_0004000.pt`)
   - Phase 1 run2 completed at 5000/5000 (active dir retains best: `head_step_0003000.pt`, `head_step_0004000.pt`)
+  - Phase 2 run1 launched (target 8000) on GPUs 3+4 using MP-DocVQA + DUDE + warmup carryover (`nvme_cache/processed/phase2/phase2_pairs.jsonl`)
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.

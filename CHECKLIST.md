@@ -38,6 +38,11 @@ Updated: 2026-02-28
 - [x] Run 100-step Phase 1 smoke on 2-GPU plan.
 - [x] Launch full Phase 1 warmup run on GPUs 3+4 (run1 completed 5k/5k at `checkpoints/phase1/head_step_0005000.pt`; run2 completed 5k/5k at `checkpoints/phase1_run2/head_step_0005000.pt`).
 
+## Phase 2.5 — Next phase execution
+- [x] Stage Phase-2 datasets to NVMe (`stage_phase_to_nvme.sh phase2`).
+- [x] Build Phase-2 training pairs from AHS MP-DocVQA + DUDE + warmup carryover (`prepare_phase2_data.py`).
+- [~] Launch Phase 2 training run on GPUs 3+4 (`phase2_run1`, 8000 steps) with top-2 checkpoint retention.
+
 ## Phase 3 — Training pipeline
 - [ ] Add/author `train_gemmpali_phase2.py` (or equivalent) with DeepThink phase structure.
 - [ ] Add config for DeepSpeed ZeRO-3 + bf16 + grad checkpointing.

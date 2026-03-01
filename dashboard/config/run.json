@@ -1,14 +1,14 @@
 {
   "host": "sigma",
-  "runName": "GemmPali Phase 1 Warmup (Run 2)",
-  "logPath": "/tmp/gemmpali_phase1_run2.log",
-  "checkpointDir": "/home/nate/GemmPali/checkpoints/phase1_run2",
-  "processPattern": "[t]rain_phase1_smoke.py.*phase1_run2",
-  "maxSteps": 5000,
+  "runName": "GemmPali Phase 2 Expansion (Run 1)",
+  "logPath": "/tmp/gemmpali_phase2_run1.log",
+  "checkpointDir": "/home/nate/GemmPali/checkpoints/phase2_run1",
+  "processPattern": "[t]rain_phase1_smoke.py.*phase2_run1",
+  "maxSteps": 8000,
   "gpus": [
     3,
     4
   ],
   "refreshSeconds": 5,
-  "defaultLr": 0.0001
+  "defaultLr": 8e-05
 }
