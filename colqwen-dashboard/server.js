@@ -37,8 +37,19 @@ function parseLog(logText, defaultLr = null) {
   const checkpoints = [];
   let completed = false;
 
+  let currentStep = 0;
+  let currentTotal = null;
+
   for (const line of logText.split('\n')) {
-    const m = line.match(/step=(\d+)\s+loss=([0-9.]+)(?:\s+eval_loss=([0-9.naNA-]+))?(?:\s+grad_norm=([0-9.eE+-]+))?(?:\s+lr=([0-9.eE+-]+))?/);
+    // tqdm progress fragments, e.g. "157/5000 [52:37<..."
+    const tq = line.match(/(\d+)\/(\d+)\s*\[/);
+    if (tq) {
+      currentStep = Number(tq[1]);
+      currentTotal = Number(tq[2]);
+    }
+
+    // GemmPali-style explicit line
+    const m = line.match(/step=(\d+)\s+loss=([0-9.eE+-]+)(?:\s+eval_loss=([0-9.naNAeE+-]+))?(?:\s+grad_norm=([0-9.eE+-]+))?(?:\s+lr=([0-9.eE+-]+))?/);
     if (m) {
       const evalRaw = m[3];
       const evalLoss = evalRaw && !/^na$/i.test(evalRaw) ? Number(evalRaw) : null;
@@ -48,15 +59,40 @@ function parseLog(logText, defaultLr = null) {
       steps.push({ step: Number(m[1]), loss: Number(m[2]), evalLoss, gradNorm, lr });
       continue;
     }
+
+    // ColQwen dictionary-like metric lines: {'loss': 0.4603, 'grad_norm': ..., 'learning_rate': ...}
+    const lossDict = line.match(/\{'loss':\s*([0-9.eE+-]+),\s*'grad_norm':\s*([0-9.eE+-]+),\s*'learning_rate':\s*([0-9.eE+-]+)/);
+    if (lossDict) {
+      const loss = Number(lossDict[1]);
+      const gradNorm = Number(lossDict[2]);
+      const lr = Number(lossDict[3]);
+      const step = currentStep || 0;
+      steps.push({ step, loss, evalLoss: null, gradNorm, lr });
+      continue;
+    }
+
+    // ColQwen eval lines: {'eval_loss': 0.4689, ...}
+    const evalDict = line.match(/\{'eval_loss':\s*([0-9.eE+-]+)/);
+    if (evalDict) {
+      const evalLoss = Number(evalDict[1]);
+      const step = currentStep || 0;
+      const prevLoss = steps.length ? steps[steps.length - 1].loss : null;
+      const prevLr = steps.length ? steps[steps.length - 1].lr : (defaultLr != null ? Number(defaultLr) : null);
+      const prevGrad = steps.length ? (steps[steps.length - 1].gradNorm ?? null) : null;
+      steps.push({ step, loss: prevLoss ?? evalLoss, evalLoss, gradNorm: prevGrad, lr: prevLr });
+      continue;
+    }
+
     const c = line.match(/checkpoint_saved=(.+head_step_(\d+)\.pt)/);
     if (c) {
       checkpoints.push({ path: c[1], step: Number(c[2]) });
       continue;
     }
+
     if (line.includes('SMOKE_OK')) completed = true;
   }
 
-  return { steps, checkpoints, completed };
+  return { steps, checkpoints, completed, latestTqdm: currentStep ? { step: currentStep, total: currentTotal } : null };
 }
 
 function rollingAvg(points, window = 10) {
@@ -100,6 +136,10 @@ function stats(points) {
     else break;
   }
 
+  const latestEval = [...points].reverse().find(p => p.evalLoss != null)?.evalLoss ?? null;
+  const latestGrad = [...points].reverse().find(p => p.gradNorm != null)?.gradNorm ?? null;
+  const latestLr = [...points].reverse().find(p => p.lr != null)?.lr ?? null;
+
   return {
     latestStep: latest.step,
     latestLoss: latest.loss,
@@ -108,9 +148,9 @@ function stats(points) {
     p95Loss: p95,
     spikeCount,
     lowLossStreak,
-    latestEvalLoss: latest.evalLoss ?? null,
-    latestGradNorm: latest.gradNorm ?? null,
-    latestLr: latest.lr ?? null,
+    latestEvalLoss: latestEval,
+    latestGradNorm: latestGrad,
+    latestLr,
   };
 }
 
@@ -193,15 +233,25 @@ app.get('/api/metrics', (_req, res) => {
 
   const checkpoints = parsed.checkpoints.length
     ? parsed.checkpoints
-    : (safeExec(cfg, `ls -1 ${cfg.checkpointDir}/head_step_*.pt 2>/dev/null | sed 's#.*/head_step_##' | sed 's/.pt$//'`)
-        .split('\n')
-        .map(x => x.trim())
-        .filter(Boolean)
-        .map(x => ({ step: Number(x), path: `${cfg.checkpointDir}/head_step_${x}.pt` })));
+    : (() => {
+        const head = safeExec(cfg, `ls -1 ${cfg.checkpointDir}/head_step_*.pt 2>/dev/null | sed 's#.*/head_step_##' | sed 's/.pt$//'`)
+          .split('\n')
+          .map(x => x.trim())
+          .filter(Boolean)
+          .map(x => ({ step: Number(x), path: `${cfg.checkpointDir}/head_step_${x}.pt` }));
+        if (head.length) return head;
+
+        const dirs = safeExec(cfg, `ls -1d ${cfg.checkpointDir}/checkpoint-* 2>/dev/null | sed 's#.*/checkpoint-##'`)
+          .split('\n')
+          .map(x => x.trim())
+          .filter(Boolean)
+          .map(x => ({ step: Number(x), path: `${cfg.checkpointDir}/checkpoint-${x}` }));
+        return dirs;
+      })();
 
   const active = procText.trim().length > 0;
-  const latestStep = Math.max(s.latestStep || 0, tq?.step || 0);
-  const progressBase = (tq?.total || cfg.maxSteps || 0);
+  const latestStep = Math.max(s.latestStep || 0, parsed.latestTqdm?.step || tq?.step || 0);
+  const progressBase = (parsed.latestTqdm?.total || tq?.total || cfg.maxSteps || 0);
   const progressPct = progressBase ? Number(((latestStep / progressBase) * 100).toFixed(2)) : 0;
 
   res.json({
