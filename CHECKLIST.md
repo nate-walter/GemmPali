@@ -36,7 +36,7 @@ Updated: 2026-02-28
 - [x] Training distribution plan updated: **start on GPUs 3+4 (2-GPU DDP)** for Phase 1 stability.
 - [x] Single-GPU fallback acknowledged (GPU 3 only) but not default.
 - [x] Run 100-step Phase 1 smoke on 2-GPU plan.
-- [x] Launch full Phase 1 warmup run on GPUs 3+4 (completed 5k/5k; checkpoints saved every 500 through `head_step_0005000.pt`).
+- [x] Launch full Phase 1 warmup run on GPUs 3+4 (run1 completed 5k/5k at `checkpoints/phase1/head_step_0005000.pt`; run2 completed 5k/5k at `checkpoints/phase1_run2/head_step_0005000.pt`).
 
 ## Phase 3 — Training pipeline
 - [ ] Add/author `train_gemmpali_phase2.py` (or equivalent) with DeepThink phase structure.

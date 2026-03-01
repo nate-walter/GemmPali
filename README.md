@@ -67,7 +67,9 @@ Current run profile:
 - 4-bit backbone loading + frozen-backbone no-grad forward
 - train head path with checkpoint saves every 500 steps
 - initial full warmup target: 5000 steps
-- status: Phase 1 full warmup completed at 5000/5000 with checkpoints through `checkpoints/phase1/head_step_0005000.pt`
+- status:
+  - Phase 1 run1 completed at 5000/5000 (`checkpoints/phase1/head_step_0005000.pt`)
+  - Phase 1 run2 completed at 5000/5000 (`checkpoints/phase1_run2/head_step_0005000.pt`)
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
