@@ -44,7 +44,9 @@ Updated: 2026-02-28
 - [x] Launch Phase 2 training run on GPUs 3+4 (`phase2_run1`, 8000 steps) with top-2 checkpoint retention.
 - [x] Monitor early-run quality and complete full run to 8k.
 - [x] Phase 2 run1 post-run assessment recorded (best retained checkpoint = step 4500).
-- [~] Launch Phase 2 refinement run (`phase2_run2`) from step-4500 head init with stronger eval reliability.
+- [x] Launch Phase 2 refinement run (`phase2_run2`) from step-4500 head init with stronger eval reliability (completed 6000/6000; best retained checkpoint = step 5000).
+- [~] Launch Phase 2 long-horizon run (`phase2_run3`) from run2 best checkpoint with 20k steps for pattern analysis.
+- [ ] Validate long-run settings for `phase2_run3`: lr=5e-5, eval_batches=12, fixed_eval, top-2 checkpoint retention.
 
 ## Phase 2.6 — Contingency gates (if Phase 2 underperforms)
 - [ ] If eval spikes >2x floor for 3+ eval windows, continue to next checkpoint boundary before intervention.

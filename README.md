@@ -77,6 +77,9 @@ Current run profile:
     - final step metrics: train `0.0002`, eval `0.0014`, grad_norm `0.0123`, lr `8e-5`
     - best retained checkpoint: `head_step_0004500.pt` (eval `0.000121`)
     - eval was low overall but noisy/spiky at times (expected for early multi-page hard-negative curriculum)
+  - Phase 2 run2 completed at 6000/6000 (refinement from run1 best checkpoint)
+    - final step line had eval spike; retention correctly kept best checkpoints
+    - best retained checkpoint: `phase2_run2/head_step_0005000.pt` (eval `0.00338`)
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
@@ -126,12 +129,14 @@ If Phase 2 does not hold quality, apply this in order (do not freestyle):
 
 ## Next attack plan (Phase 2 refinement)
 
-Immediate follow-up run is locked as `phase2_run2`:
-- initialize head from best checkpoint: `checkpoints/phase2_run1/head_step_0004500.pt`
+Immediate follow-up long-horizon run is locked as `phase2_run3`:
+- initialize head from best checkpoint: `checkpoints/phase2_run2/head_step_0005000.pt`
 - keep same multi-page dataset mix (MP-DocVQA + DUDE + warmup carryover)
-- increase eval reliability with fixed holdout behavior + higher eval batches
+- run long pattern window: **20,000 steps**
+- strengthen eval reliability (`eval_batches=12`, fixed holdout behavior)
+- lower LR for long stability (`5e-5`)
 - keep top-2 checkpoint retention and HDD archive policy
-- promote only if eval trend remains stable/improving across windows (not one-point wins)
+- objective: observe long-run train/eval/grad patterns and promote based on stable trend, not single-point wins
 
 ## GemmPali dashboard (new)
 
