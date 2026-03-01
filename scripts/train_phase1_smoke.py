@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, json, os, random
+import argparse, json, os, random, shutil
 from pathlib import Path
 
 import torch
@@ -39,6 +39,8 @@ def main():
     ap.add_argument("--save-every", type=int, default=500)
     ap.add_argument("--eval-every", type=int, default=100)
     ap.add_argument("--eval-batches", type=int, default=2)
+    ap.add_argument("--keep-top-k", type=int, default=2)
+    ap.add_argument("--archive-dir", default="")
     args = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -95,6 +97,7 @@ def main():
         my_eval_rows = eval_rows
 
     last_eval_loss = None
+    checkpoint_meta = []
 
     for step in range(1, args.steps + 1):
         r = my_rows[(step - 1) % len(my_rows)]
@@ -162,9 +165,16 @@ def main():
             sdir = Path(args.save_dir)
             sdir.mkdir(parents=True, exist_ok=True)
             ckpt = sdir / f"head_step_{step:07d}.pt"
+            train_loss_now = float(loss.item())
+            eval_loss_now = float(last_eval_loss) if last_eval_loss is not None else None
+            score = eval_loss_now if eval_loss_now is not None else train_loss_now
+
             torch.save({
                 "step": step,
                 "head": model.module.head.state_dict(),
+                "train_loss": train_loss_now,
+                "eval_loss": eval_loss_now,
+                "score": score,
                 "cfg": {
                     "model": args.model,
                     "dtype": args.dtype,
@@ -172,6 +182,39 @@ def main():
                 },
             }, ckpt)
             print(f"checkpoint_saved={ckpt}", flush=True)
+
+            checkpoint_meta.append({
+                "step": step,
+                "path": str(ckpt),
+                "train_loss": train_loss_now,
+                "eval_loss": eval_loss_now,
+                "score": score,
+            })
+
+            checkpoint_meta.sort(key=lambda x: (x["score"], x["step"]))
+            keep = checkpoint_meta[: max(1, args.keep_top_k)]
+            remove = checkpoint_meta[max(1, args.keep_top_k):]
+
+            archive_dir = Path(args.archive_dir) if args.archive_dir else None
+            for item in remove:
+                pth = Path(item["path"])
+                if pth.exists():
+                    if archive_dir is not None:
+                        archive_dir.mkdir(parents=True, exist_ok=True)
+                        dst = archive_dir / pth.name
+                        try:
+                            shutil.move(str(pth), str(dst))
+                            print(f"checkpoint_archived={dst}", flush=True)
+                        except Exception:
+                            pth.unlink(missing_ok=True)
+                            print(f"checkpoint_deleted={pth}", flush=True)
+                    else:
+                        pth.unlink(missing_ok=True)
+                        print(f"checkpoint_deleted={pth}", flush=True)
+
+            checkpoint_meta = [x for x in keep if Path(x["path"]).exists()]
+            index_path = sdir / "checkpoint_index.json"
+            index_path.write_text(json.dumps({"top_k": args.keep_top_k, "checkpoints": checkpoint_meta}, indent=2))
 
     if local_rank == 0:
         out = Path("reports/phase1_smoke_result.json")

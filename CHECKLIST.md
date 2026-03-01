@@ -69,4 +69,5 @@ Updated: 2026-02-28
 - [x] Use NVMe only as temporary training cache, staged per phase.
 - [x] Keep dataset manifest + provenance in `docs/datasets/`.
 - [x] Maintain exact DeepThink dataset lock file (`docs/datasets/EXACT_DEEPTHINK_DATASETS_LOCK.md`).
+- [x] Enforce checkpoint retention policy (best top-2 in active run dir; archive extras to HDD).
 - [x] Never reframe mission into domain-specialist tuning.

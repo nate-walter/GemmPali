@@ -12,6 +12,9 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 GEMMA_LOCAL="/home/nate/.cache/huggingface/hub/models--google--gemma-3-12b-it/snapshots/96b6f1eccf38110c56df3a15bffe176da04bfd80"
 
 # Phase 1 warmup run (head-focused)
+RUN_NAME="phase1"
+ARCHIVE_DIR="/mnt/ripped_media/GemmPali/checkpoint_archive/${RUN_NAME}"
+
 torchrun --standalone --nproc_per_node=2 scripts/train_phase1_smoke.py \
   --pairs /home/nate/GemmPali/nvme_cache/processed/phase1/phase1_warmup_pairs.jsonl \
   --model "$GEMMA_LOCAL" \
@@ -20,6 +23,10 @@ torchrun --standalone --nproc_per_node=2 scripts/train_phase1_smoke.py \
   --dtype bf16 \
   --lr 1e-4 \
   --log-every 20 \
+  --eval-every 100 \
+  --eval-batches 2 \
   --save-every 500 \
-  --save-dir /home/nate/GemmPali/checkpoints/phase1 \
+  --save-dir /home/nate/GemmPali/checkpoints/${RUN_NAME} \
+  --keep-top-k 2 \
+  --archive-dir "$ARCHIVE_DIR" \
   --load-in-4bit

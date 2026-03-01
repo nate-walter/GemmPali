@@ -45,6 +45,7 @@ All training corpora are stored under HDD roots for space management and reprodu
 - NVMe usage: **mandatory preflight stage for active training phase only**
 - Run phase staging script before each training launch (Phase 1/2/3).
 - After training run: clear staged NVMe copies unless explicitly retained.
+- **Checkpoint retention policy:** keep only best **top-2** checkpoints in active run directory; archive the rest to HDD under `/mnt/ripped_media/GemmPali/checkpoint_archive/<run_name>/`.
 
 This policy is non-negotiable for operational stability.
 
@@ -67,9 +68,10 @@ Current run profile:
 - 4-bit backbone loading + frozen-backbone no-grad forward
 - train head path with checkpoint saves every 500 steps
 - initial full warmup target: 5000 steps
+- top-2 checkpoint retention active (best 2 kept in run dir, others archived to HDD)
 - status:
-  - Phase 1 run1 completed at 5000/5000 (`checkpoints/phase1/head_step_0005000.pt`)
-  - Phase 1 run2 completed at 5000/5000 (`checkpoints/phase1_run2/head_step_0005000.pt`)
+  - Phase 1 run1 completed at 5000/5000 (active dir retains best: `head_step_0003000.pt`, `head_step_0004000.pt`)
+  - Phase 1 run2 completed at 5000/5000 (active dir retains best: `head_step_0003000.pt`, `head_step_0004000.pt`)
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
