@@ -72,8 +72,11 @@ Current run profile:
 - status:
   - Phase 1 run1 completed at 5000/5000 (active dir retains best: `head_step_0003000.pt`, `head_step_0004000.pt`)
   - Phase 1 run2 completed at 5000/5000 (active dir retains best: `head_step_0003000.pt`, `head_step_0004000.pt`)
-  - Phase 2 run1 launched (target 8000) on GPUs 3+4 using MP-DocVQA + DUDE + warmup carryover (`nvme_cache/processed/phase2/phase2_pairs.jsonl`)
-  - Early Phase 2 signal (around step ~1700): train loss low/stable with periodic hard-negative spikes; eval loss remains low but noisy as expected in early multi-page curriculum.
+  - Phase 2 run1 completed at 8000/8000 on GPUs 3+4 using MP-DocVQA + DUDE + warmup carryover (`nvme_cache/processed/phase2/phase2_pairs.jsonl`)
+  - Phase 2 run1 highlights:
+    - final step metrics: train `0.0002`, eval `0.0014`, grad_norm `0.0123`, lr `8e-5`
+    - best retained checkpoint: `head_step_0004500.pt` (eval `0.000121`)
+    - eval was low overall but noisy/spiky at times (expected for early multi-page hard-negative curriculum)
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.
@@ -120,6 +123,15 @@ If Phase 2 does not hold quality, apply this in order (do not freestyle):
      - eval trend is stable/improving over multiple windows,
      - no sustained instability pattern,
      - top checkpoint beats prior phase baseline on held-out retrieval checks.
+
+## Next attack plan (Phase 2 refinement)
+
+Immediate follow-up run is locked as `phase2_run2`:
+- initialize head from best checkpoint: `checkpoints/phase2_run1/head_step_0004500.pt`
+- keep same multi-page dataset mix (MP-DocVQA + DUDE + warmup carryover)
+- increase eval reliability with fixed holdout behavior + higher eval batches
+- keep top-2 checkpoint retention and HDD archive policy
+- promote only if eval trend remains stable/improving across windows (not one-point wins)
 
 ## GemmPali dashboard (new)
 

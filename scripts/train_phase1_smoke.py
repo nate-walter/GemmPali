@@ -41,6 +41,8 @@ def main():
     ap.add_argument("--eval-batches", type=int, default=2)
     ap.add_argument("--keep-top-k", type=int, default=2)
     ap.add_argument("--archive-dir", default="")
+    ap.add_argument("--init-head-checkpoint", default="")
+    ap.add_argument("--fixed-eval", action="store_true", default=True)
     args = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -83,6 +85,12 @@ def main():
         p.requires_grad = False
 
     model = DDP(wrapper, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
+
+    if args.init_head_checkpoint:
+        cp = torch.load(args.init_head_checkpoint, map_location="cpu")
+        model.module.head.load_state_dict(cp["head"], strict=True)
+        if local_rank == 0:
+            print(f"head_init_loaded={args.init_head_checkpoint}", flush=True)
 
     params = [p for p in model.module.head.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=args.lr)
@@ -134,7 +142,8 @@ def main():
                 eval_losses = []
                 for bi in range(max(1, args.eval_batches)):
                     er = my_eval_rows[(step + bi) % len(my_eval_rows)]
-                    e_batch = [er, random.choice(my_eval_rows)]
+                    neg = my_eval_rows[(step + bi + 137) % len(my_eval_rows)] if args.fixed_eval else random.choice(my_eval_rows)
+                    e_batch = [er, neg]
                     q_texts_e = [x.get("query", "") for x in e_batch]
                     d_texts_e = [x.get("query", "") + " \n " + (x.get("answer", "") or "") for x in e_batch]
                     q_ids_e = tokenizer(q_texts_e, padding=True, truncation=True, max_length=args.max_len, return_tensors="pt").input_ids.to(device)

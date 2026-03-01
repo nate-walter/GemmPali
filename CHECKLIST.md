@@ -41,8 +41,10 @@ Updated: 2026-02-28
 ## Phase 2.5 — Next phase execution
 - [x] Stage Phase-2 datasets to NVMe (`stage_phase_to_nvme.sh phase2`).
 - [x] Build Phase-2 training pairs from AHS MP-DocVQA + DUDE + warmup carryover (`prepare_phase2_data.py`).
-- [~] Launch Phase 2 training run on GPUs 3+4 (`phase2_run1`, 8000 steps) with top-2 checkpoint retention.
-- [~] Monitor early-run quality: train/eval both low with expected variance; continue toward full 8k before promotion decision.
+- [x] Launch Phase 2 training run on GPUs 3+4 (`phase2_run1`, 8000 steps) with top-2 checkpoint retention.
+- [x] Monitor early-run quality and complete full run to 8k.
+- [x] Phase 2 run1 post-run assessment recorded (best retained checkpoint = step 4500).
+- [~] Launch Phase 2 refinement run (`phase2_run2`) from step-4500 head init with stronger eval reliability.
 
 ## Phase 2.6 — Contingency gates (if Phase 2 underperforms)
 - [ ] If eval spikes >2x floor for 3+ eval windows, continue to next checkpoint boundary before intervention.
