@@ -92,6 +92,35 @@ No single-domain overfitting claims.
 
 Head-to-head success must be demonstrated on mixed-domain multi-page retrieval tasks with apples-to-apples controls and explicit cross-page metrics.
 
+## Contingency plan (if current phase underperforms)
+
+If Phase 2 does not hold quality, apply this in order (do not freestyle):
+
+1. **Stability gate (during run)**
+   - Trigger: eval loss rises >2x from recent floor for 3+ eval windows.
+   - Action: continue until next checkpoint boundary; do not panic-stop on single spikes.
+
+2. **Checkpoint rollback**
+   - Action: promote best checkpoint from `checkpoint_index.json` (top-2 policy), not latest step by default.
+
+3. **Data rebalance pass**
+   - Trigger: persistent eval degradation after rollback.
+   - Action: reduce warmup carryover share, increase MP-DocVQA/DUDE hard examples; regenerate phase pairs.
+
+4. **Learning-rate/grad control**
+   - Trigger: repeated grad_norm bursts + unstable eval.
+   - Action: lower LR (e.g., 8e-5 -> 6e-5), keep clip norm, rerun from best checkpoint.
+
+5. **Eval reliability hardening**
+   - Trigger: train/eval disagreement with noisy point estimates.
+   - Action: increase eval batches and fixed holdout slice before making promote/kill decisions.
+
+6. **Promotion criteria**
+   - Only advance to next phase if:
+     - eval trend is stable/improving over multiple windows,
+     - no sustained instability pattern,
+     - top checkpoint beats prior phase baseline on held-out retrieval checks.
+
 ## GemmPali dashboard (new)
 
 A dedicated cyberpunk training dashboard now exists under:

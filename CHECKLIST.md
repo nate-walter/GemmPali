@@ -44,6 +44,14 @@ Updated: 2026-02-28
 - [~] Launch Phase 2 training run on GPUs 3+4 (`phase2_run1`, 8000 steps) with top-2 checkpoint retention.
 - [~] Monitor early-run quality: train/eval both low with expected variance; continue toward full 8k before promotion decision.
 
+## Phase 2.6 — Contingency gates (if Phase 2 underperforms)
+- [ ] If eval spikes >2x floor for 3+ eval windows, continue to next checkpoint boundary before intervention.
+- [ ] Roll back to best checkpoint using `checkpoints/<run>/checkpoint_index.json` (top-2 policy).
+- [ ] Rebalance phase2 pair mix (lower warmup carryover, increase MP-DocVQA/DUDE hard examples) and regenerate pairs.
+- [ ] Lower LR step-down (e.g., `8e-5 -> 6e-5`) if grad_norm bursts persist.
+- [ ] Increase eval reliability (`--eval-batches` up, fixed holdout) before go/no-go decisions.
+- [ ] Promote phase only when eval trend is stable/improving across multiple windows.
+
 ## Phase 3 — Training pipeline
 - [ ] Add/author `train_gemmpali_phase2.py` (or equivalent) with DeepThink phase structure.
 - [ ] Add config for DeepSpeed ZeRO-3 + bf16 + grad checkpointing.
