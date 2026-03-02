@@ -10,6 +10,21 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 
 ## Current status
 
+## Fresh update (2026-03-01, 20:50 EST)
+
+- DeepThink Run-B long completed (phase3_3_runB_long) at 20,000/20,000 (SMOKE_OK)
+  - log: /tmp/gemmpali/phase3_3_runB_long.log
+  - run dir: checkpoints/phase3_3_runB_long/
+  - retained top-2:
+    - head_step_0016000.pt (eval_loss 0.0116015) <- best
+    - head_step_0005500.pt (eval_loss 0.0117919)
+- Stage 3.3 contract execution complete:
+  - run mix: 25% ViDoRe anchor + 75% intra-doc crucible
+  - training controls active: temperature / grad clamp / intra-doc negatives / warmup scheduler
+- Next action now in progress:
+  - run hard harness head-to-head for phase3_3_runB_long best checkpoint vs current champion (phase2_run3 step 18000)
+  - promotion decision remains metrics-gated
+
 ### Completed
 - DeepThink-driven patch path is implemented and running:
   - doc/query mask split
@@ -80,6 +95,15 @@ Current run profile:
   - Phase 2 run2 completed at 6000/6000 (refinement from run1 best checkpoint)
     - final step line had eval spike; retention correctly kept best checkpoints
     - best retained checkpoint: `phase2_run2/head_step_0005000.pt` (eval `0.00338`)
+  - Phase 3.2 run1 completed at 20000/20000 (long-run corrective from Phase2 champion)
+    - best retained checkpoint: phase3_2_run1/head_step_0011500.pt (eval 0.0007724)
+    - second retained checkpoint: phase3_2_run1/head_step_0014500.pt (eval 0.0019670)
+  - Phase 3.3 Run B long started from Phase2 champion (DeepThink r3 contract)
+    - run: phase3_3_runB_long (target 20,000 steps)
+    - data: phase3_3_runB/phase3_3_pairs.jsonl (25% ViDoRe + 75% intra-doc)
+  - Phase 3.3 Run B long completed at 20000/20000
+    - best retained checkpoint: phase3_3_runB_long/head_step_0016000.pt (eval 0.0116015)
+    - second retained checkpoint: phase3_3_runB_long/head_step_0005500.pt (eval 0.0117919)
 
 - Default launch lane: `CUDA_VISIBLE_DEVICES=3,4`
 - Single-GPU mode (`GPU 3` only) is fallback-only for constrained windows.

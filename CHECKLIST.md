@@ -1,6 +1,6 @@
 # GemmPali CHECKLIST (SOTA Multi-Page Program)
 
-Updated: 2026-02-28
+Updated: 2026-03-01
 
 ## Mission lock
 - [x] GemmPali is **NOT CGI-centric**.
@@ -45,8 +45,8 @@ Updated: 2026-02-28
 - [x] Monitor early-run quality and complete full run to 8k.
 - [x] Phase 2 run1 post-run assessment recorded (best retained checkpoint = step 4500).
 - [x] Launch Phase 2 refinement run (`phase2_run2`) from step-4500 head init with stronger eval reliability (completed 6000/6000; best retained checkpoint = step 5000).
-- [~] Launch Phase 2 long-horizon run (`phase2_run3`) from run2 best checkpoint with 20k steps for pattern analysis.
-- [ ] Validate long-run settings for `phase2_run3`: lr=5e-5, eval_batches=12, fixed_eval, top-2 checkpoint retention.
+- [x] Launch Phase 2 long-horizon run (`phase2_run3`) from run2 best checkpoint with 20k steps for pattern analysis.
+- [x] Validate long-run settings for `phase2_run3`: lr=5e-5, eval_batches=12, fixed_eval, top-2 checkpoint retention.
 
 ## Phase 2.6 — Contingency gates (if Phase 2 underperforms)
 - [ ] If eval spikes >2x floor for 3+ eval windows, continue to next checkpoint boundary before intervention.
@@ -62,7 +62,8 @@ Updated: 2026-02-28
 - [ ] Implement phase curriculum:
   - [ ] Phase 1 warmup (ViDoRe + DocVQA)
   - [ ] Phase 2 volumetric expansion (MP-DocVQA + DUDE + balanced supplemental CGI)
-  - [ ] Phase 3 hard-negative crucible (multi-page stress with strict hard negatives)
+  - [x] Phase 3 hard-negative crucible data pass prepared (MP-DocVQA/DUDE-heavy + warmup cap).
+  - [x] Phase 3 hard-negative crucible run completed (`phase3_run1`, 16000/16000) and champion promoted (step 12500).
 - [ ] Add Gate 1 and Gate 2 go/no-go checks and failover logic.
 
 ## Phase 4 — Evaluation vs ColQwen (general, not CGI-only)
@@ -70,7 +71,7 @@ Updated: 2026-02-28
 - [ ] Include mixed-domain holdout (scientific/docs/forms/reports), not only CGI.
 - [ ] Track: Hit@k, MRR, NDCG, latency, VRAM, CPCR-like cross-page consistency.
 - [ ] Add failure taxonomy + remediation loop.
-- [ ] Produce scoreboard artifacts and reproducible run cards.
+- [~] Produce scoreboard artifacts and reproducible run cards (bootstrap scoreboard created; retrieval metrics harness run pending).
 
 ## Phase 1.6 — Observability / dashboard
 - [x] Build dedicated GemmPali metrics dashboard with cyberpunk UI and metric hints.
@@ -91,3 +92,50 @@ Updated: 2026-02-28
 - [x] Maintain exact DeepThink dataset lock file (`docs/datasets/EXACT_DEEPTHINK_DATASETS_LOCK.md`).
 - [x] Enforce checkpoint retention policy (best top-2 in active run dir; archive extras to HDD).
 - [x] Never reframe mission into domain-specialist tuning.
+
+
+
+## 2026-03-01 execution burst
+- [x] Promote Phase 2 champion (`phase2_run3` step 18000) to `checkpoints/champions/current_champion.pt`.
+- [x] Build Phase 3 crucible pairs (`nvme_cache/processed/phase3/phase3_pairs.jsonl`).
+- [x] Launch Phase 3 training from champion (`scripts/launch_phase3_crucible.sh`, log `/tmp/gemmpali/phase3_run1.log`).
+- [x] Stand up head-to-head scoreboard anchor (`reports/head_to_head_scoreboard.{json,md}`).
+
+
+## 2026-03-01 phase3 closeout
+- [x] Confirm Phase 3 run completion at 16,000/16,000 (`SMOKE_OK`).
+- [x] Promote best Phase 3 checkpoint to current champion (`phase3_run1` step 12500).
+- [x] Hard harness confirms Phase 2 checkpoint-18000 remains best retrieval champion.
+- [x] Refresh README status + CHECKLIST + scoreboard artifacts.
+- [~] Run full retrieval harness (Hit@k, MRR, NDCG, CPCR, latency, VRAM) vs ColQwen and publish results. (surrogate harness complete for Phase2/3/3.1/3.2; true ColQwen apples-to-apples still pending (next after phase3_3_runB_long))
+
+
+## 2026-03-01 phase3.1 corrective + verdict
+- [x] Build corrective dataset (nvme_cache/processed/phase3_1/phase3_pairs.jsonl, warmup 18.03%).
+- [x] Run Phase 3.1 corrective (phase3_1_run1, 4000 steps, LR 2e-5).
+- [x] Run hard harness comparison across Phase2 / Phase3 / Phase3.1.
+- [x] Re-point current_champion.pt to Phase2 step 18000 based on hard-harness performance.
+
+
+## 2026-03-01 phase3.2 long-run + verdict
+- [x] Launch Phase 3.2 long run (phase3_2_run1) at 20,000 steps from Phase2 champion init.
+- [x] Confirm run completion at 20,000/20,000 (SMOKE_OK).
+- [x] Evaluate retained best checkpoint (step 11500, eval_loss 0.0007724) with hard harness.
+- [x] Compare hard harness against Phase2 / Phase3 / Phase3.1 baselines.
+- [x] Keep current_champion.pt on Phase2 step 18000 (best quality+latency tradeoff).
+
+
+## 2026-03-01 deepthink-r3 corrective launch
+- [x] Read and applied docs/deepthink/deepthink-response-3.md directives.
+- [x] Updated scripts/train_phase1_smoke.py with temperature, intra-doc negatives, scheduler/warmup, explicit grad clamp args.
+- [x] Built Run-B dataset (nvme_cache/processed/phase3_3_runB/phase3_3_pairs.jsonl) at 80k pairs.
+- [x] Mix locked: 25% ViDoRe anchor + 75% intra-doc crucible.
+- [x] Launched phase3_3_runB_long (20,000 steps) from Phase2 champion init.
+- [~] Complete run + benchmark with scaled raw-image harness and evaluate promotion gate. (run complete; benchmark pass now running)
+
+
+## 2026-03-01 deepthink-r3 runB completion
+- [x] Run-B long completed (phase3_3_runB_long, 20000/20000, SMOKE_OK).
+- [x] Retained best checkpoint set captured (step16000, step5500).
+- [~] Running hard harness comparison vs Phase2 champion for promotion decision.
+
