@@ -131,11 +131,12 @@ Updated: 2026-03-01
 - [x] Built Run-B dataset (nvme_cache/processed/phase3_3_runB/phase3_3_pairs.jsonl) at 80k pairs.
 - [x] Mix locked: 25% ViDoRe anchor + 75% intra-doc crucible.
 - [x] Launched phase3_3_runB_long (20,000 steps) from Phase2 champion init.
-- [~] Complete run + benchmark with scaled raw-image harness and evaluate promotion gate. (run complete; benchmark pass now running)
+- [x] Complete run + benchmark with scaled raw-image harness and evaluate promotion gate. (Run-B benchmark completed; no promotion)
 
 
 ## 2026-03-01 deepthink-r3 runB completion
 - [x] Run-B long completed (phase3_3_runB_long, 20000/20000, SMOKE_OK).
 - [x] Retained best checkpoint set captured (step16000, step5500).
-- [~] Running hard harness comparison vs Phase2 champion for promotion decision.
+- [x] Hard harness comparison vs Phase2 champion completed.
+- [x] Promotion decision: rejected (Phase2 remains champion).
 

@@ -10,20 +10,13 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 
 ## Current status
 
-## Fresh update (2026-03-01, 20:50 EST)
+## Fresh update (2026-03-01, 21:05 EST)
 
-- DeepThink Run-B long completed (phase3_3_runB_long) at 20,000/20,000 (SMOKE_OK)
-  - log: /tmp/gemmpali/phase3_3_runB_long.log
-  - run dir: checkpoints/phase3_3_runB_long/
-  - retained top-2:
-    - head_step_0016000.pt (eval_loss 0.0116015) <- best
-    - head_step_0005500.pt (eval_loss 0.0117919)
-- Stage 3.3 contract execution complete:
-  - run mix: 25% ViDoRe anchor + 75% intra-doc crucible
-  - training controls active: temperature / grad clamp / intra-doc negatives / warmup scheduler
-- Next action now in progress:
-  - run hard harness head-to-head for phase3_3_runB_long best checkpoint vs current champion (phase2_run3 step 18000)
-  - promotion decision remains metrics-gated
+- DeepThink Run-B long benchmark decision completed (hard harness, 80 samples / 48 candidates / seed 7).
+- Head-to-head on Run-B dataset (`phase3_3_pairs`) results:
+  - Phase2 champion (step 18000): Hit@1 0.8625, Hit@5 0.9750, MRR@10 0.90375, NDCG@10 0.92694, CPCR 0.9750, latency 1952.05ms
+  - Phase3.3 Run-B best (step 16000): Hit@1 0.6875, Hit@5 0.9500, MRR@10 0.80104, NDCG@10 0.84178, CPCR 0.9500, latency 1953.64ms
+- Decision: keep Phase2 step18000 as champion; Run-B does not pass promotion gate.
 
 ### Completed
 - DeepThink-driven patch path is implemented and running:
