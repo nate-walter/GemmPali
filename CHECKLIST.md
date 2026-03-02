@@ -1,6 +1,6 @@
 # GemmPali CHECKLIST (SOTA Multi-Page Program)
 
-Updated: 2026-03-01
+Updated: 2026-03-02
 
 ## Mission lock
 - [x] GemmPali is **NOT CGI-centric**.
@@ -139,4 +139,24 @@ Updated: 2026-03-01
 - [x] Retained best checkpoint set captured (step16000, step5500).
 - [x] Hard harness comparison vs Phase2 champion completed.
 - [x] Promotion decision: rejected (Phase2 remains champion).
+
+
+## 2026-03-01 deepthink-r4 runC launch
+- [x] Consolidated Run-B failure packet and asked DeepThink for hard-call follow-up.
+- [x] Implemented new trainer: scripts/train_phase3_full.py (hybrid loss + grad value clipping + in-batch negatives).
+- [x] Added launcher: scripts/launch_phase3_4_runC_unshackled.sh.
+- [x] Applied exact run config from response-4 (5e-6, cosine warmup, negatives-per-query=7, max_len=8192).
+- [x] Launched phase3_4_runC_unshackled from Phase2 champion init.
+- [x] Complete run + run hard harness vs champion + make promote/hold decision.
+- [x] Decision: HOLD Phase2 champion (phase2_run3 step 18000). RunC underperformed on Hit@1/MRR/NDCG in hard harness.
+
+## 2026-03-02 deepthink-r5 phase4 vision rescue
+- [x] Read and accepted DeepThink response-5 forensic diagnosis.
+- [x] Added Phase4 vision trainer (`scripts/train_phase4_vision.py`) with real image pipeline + MaxSim + LoRA.
+- [x] Added conservative launcher (`scripts/launch_phase4_runD_vision.sh`) for 2x3090.
+- [x] Added raw-image retrieval harness (`scripts/run_retrieval_harness_raw_image.py`) with no surrogate text docs.
+- [x] Added operator runbook (`reports/phase4_vision_rescue_runbook.md`).
+- [x] Static compile validation passed for new scripts.
+- [x] README/CHECKLIST updated and committed.
+- [ ] Launch Phase4 Run-D vision training and monitor first 250-step smoke gate.
 

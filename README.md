@@ -10,13 +10,37 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 
 ## Current status
 
-## Fresh update (2026-03-01, 21:05 EST)
+## Fresh update (2026-03-02, 11:20 EST)
 
-- DeepThink Run-B long benchmark decision completed (hard harness, 80 samples / 48 candidates / seed 7).
-- Head-to-head on Run-B dataset (`phase3_3_pairs`) results:
-  - Phase2 champion (step 18000): Hit@1 0.8625, Hit@5 0.9750, MRR@10 0.90375, NDCG@10 0.92694, CPCR 0.9750, latency 1952.05ms
-  - Phase3.3 Run-B best (step 16000): Hit@1 0.6875, Hit@5 0.9500, MRR@10 0.80104, NDCG@10 0.84178, CPCR 0.9500, latency 1953.64ms
-- Decision: keep Phase2 step18000 as champion; Run-B does not pass promotion gate.
+- DeepThink response-5 forensic diagnosis accepted: Phase3 surrogate-text path was bypassing true vision learning.
+- Phase4 vision rescue implemented (additive, non-destructive):
+  - scripts/train_phase4_vision.py
+  - scripts/launch_phase4_runD_vision.sh
+  - scripts/run_retrieval_harness_raw_image.py
+  - reports/phase4_vision_rescue_runbook.md
+- Core architectural corrections in Phase4 trainer:
+  - real image loading via PIL + AutoProcessor (no query+answer surrogate docs in forward path)
+  - sequence-preserving late interaction (no mean-pool collapse)
+  - MaxSim-style scoring for positives + in-batch + hard negatives
+  - LoRA adapters on backbone attention modules (q_proj/k_proj/v_proj/o_proj) with trainable head
+- Phase2 champion remains current retrieval champion until raw-image harness promotion gate is cleared.
+- Next action: launch Phase4 Run-D vision training (conservative defaults), then evaluate on raw-image harness.
+
+## Fresh update (2026-03-01, 21:47 EST)
+
+- DeepThink response-4 directives applied in full (Run-C unshackled path).
+- New trainer implemented: scripts/train_phase3_full.py
+  - hybrid objective: positive + in-batch negatives + hard negatives
+  - new controls: max_grad_value, in_batch_negatives, negatives_per_query, cosine warmup scheduler
+  - keeps checkpoint top-k retention + archive behavior
+- New launcher implemented: scripts/launch_phase3_4_runC_unshackled.sh
+  - init: Phase2 champion (phase2_run3/head_step_0018000.pt)
+  - run data: nvme_cache/processed/phase3_3_runB/phase3_3_pairs.jsonl
+  - steps: 8,000
+  - lr: 5e-6, warmup 500, cosine_with_warmup
+  - max_len: 8192, temperature 0.05, max_grad_norm 1.0, max_grad_value 0.1
+  - negatives: intra-doc=true, in-batch=true, hard negatives/query=7
+- Run status: phase3_4_runC_unshackled launched; promotion decision remains benchmark-gated.
 
 ### Completed
 - DeepThink-driven patch path is implemented and running:
