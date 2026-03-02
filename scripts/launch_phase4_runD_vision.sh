@@ -5,7 +5,7 @@ set -euo pipefail
 # Conservative defaults for 2x3090 to avoid OOM.
 
 cd /home/nate/GemmPali
-source /home/nate/ColPali/colpali-us-vlm-multipage/.venv-usvlm/bin/activate
+source /home/nate/grpo-env/bin/activate
 source ./scripts/train_env_nvme.sh >/dev/null
 
 RUN_NAME="phase4_runD_vision"
