@@ -158,5 +158,5 @@ Updated: 2026-03-02
 - [x] Added operator runbook (`reports/phase4_vision_rescue_runbook.md`).
 - [x] Static compile validation passed for new scripts.
 - [x] README/CHECKLIST updated and committed.
-- [ ] Launch Phase4 Run-D vision training and monitor first 250-step smoke gate.
+- [x] Launch Phase4 Run-D vision training and monitor first 250-step smoke gate.
 
