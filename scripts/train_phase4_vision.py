@@ -243,6 +243,10 @@ def encode_docs_from_images(model, processor, images, max_len, device, dtype):
 
 
 def batched_maxsim(q_seq, d_seq, q_mask, d_mask):
+    # q_seq: [B,Q,D], d_seq: [C,P,D], q_mask:[B,Q0], d_mask:[C,P0]
+    q_mask = _align_mask_2d(q_mask, q_seq.size(1))
+    d_mask = _align_mask_2d(d_mask, d_seq.size(1))
+
     sims = torch.einsum("bqd,cpd->bcqp", q_seq, d_seq)
     d_mask_ext = d_mask.view(1, d_seq.size(0), 1, d_seq.size(1)).bool()
     sims = sims.masked_fill(~d_mask_ext, float("-inf"))
@@ -252,7 +256,41 @@ def batched_maxsim(q_seq, d_seq, q_mask, d_mask):
     return max_sims.sum(dim=-1)
 
 
+
+
+def _align_mask_2d(mask: torch.Tensor, target_len: int) -> torch.Tensor:
+    """Align [B, T] token mask to pooled sequence length target_len."""
+    if mask is None:
+        raise ValueError('mask is None')
+    if mask.dim() != 2:
+        raise ValueError(f'expected 2D mask [B,T], got {tuple(mask.shape)}')
+    B, T = mask.shape
+    if T == target_len:
+        return mask.bool()
+    m = mask.float().unsqueeze(1)  # [B,1,T]
+    # adaptive max-pool preserves any-valid-token semantics under pooling/downsampling
+    m2 = F.adaptive_max_pool1d(m, target_len).squeeze(1)
+    return (m2 > 0.5)
+
+
+def _align_mask_3d(mask: torch.Tensor, target_len: int) -> torch.Tensor:
+    """Align [B, N, T] token mask to pooled sequence length target_len."""
+    if mask is None:
+        raise ValueError('mask is None')
+    if mask.dim() != 3:
+        raise ValueError(f'expected 3D mask [B,N,T], got {tuple(mask.shape)}')
+    B, N, T = mask.shape
+    if T == target_len:
+        return mask.bool()
+    m = mask.float().view(B * N, 1, T)
+    m2 = F.adaptive_max_pool1d(m, target_len).view(B, N, target_len)
+    return (m2 > 0.5)
+
 def hardneg_maxsim(q_seq, hard_seq, q_mask, hard_mask):
+    # q_seq:[B,Q,D], hard_seq:[B,N,P,D], q_mask:[B,Q0], hard_mask:[B,N,P0]
+    q_mask = _align_mask_2d(q_mask, q_seq.size(1))
+    hard_mask = _align_mask_3d(hard_mask, hard_seq.size(2))
+
     sims = torch.einsum("bqd,bnpd->bnqp", q_seq, hard_seq)
     h_mask_ext = hard_mask.unsqueeze(2).bool()
     sims = sims.masked_fill(~h_mask_ext, float("-inf"))
