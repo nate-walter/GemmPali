@@ -178,3 +178,14 @@ Updated: 2026-03-02
 - [x] Relaunch run and re-point `phase4_runD_vision_current.log`.
 - [ ] Verify first stable >250-step window without OOM.
 
+## 2026-03-03 deepthink-r7 application + smoke result
+- [x] Applied r7 code fixes in `train_phase4_vision.py`:
+  - gradient checkpointing enabled for k-bit prep
+  - explicit `wrapper.backbone.gradient_checkpointing_enable()`
+  - length-normalized MaxSim returns in batched/hardneg paths
+- [x] Launched 50-step smoke with r7 aggressive settings (`4096/bs2/neg3/in-batch=true`).
+- [x] Smoke result: FAILED due to CUDA OOM (vision tower forward).
+- [x] Captured failure in `reports/phase4_smoke_r7_50.log`.
+- [ ] Relaunch with constrained runtime tuple preserving r7 code fixes.
+- [ ] Re-run 250/1000 gate and corrected head-to-head protocol.
+

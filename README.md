@@ -269,3 +269,17 @@ See `CHECKLIST.md` for the active execution plan and gates.
   - Dashboard/API: `http://10.46.150.108:3474`
   - Expo Go: `exp://10.46.150.108:8084`
 
+## Fresh update (2026-03-03, 17:50 EST)
+
+- DeepThink response-7 applied (forensic follow-up on r6):
+  - gradient checkpointing enabled in k-bit prep + explicit PEFT backbone checkpointing enable.
+  - MaxSim score normalization by valid query length added in `batched_maxsim` and `hardneg_maxsim`.
+- Attempted aggressive smoke per r7 target config:
+  - `max_len=4096`, `batch_size=2`, `negatives_per_query=3`, in-batch negatives enabled.
+- Outcome:
+  - run failed with CUDA OOM during vision-tower forward path in smoke gate.
+  - confirms this exact aggressive tuple currently exceeds practical memory budget on active hardware context.
+- Current state:
+  - Phase4 run not active after OOM fail.
+  - next planned move: fallback from r7 aggression while preserving its math fixes (checkpointing + normalized MaxSim).
+
