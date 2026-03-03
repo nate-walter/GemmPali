@@ -231,7 +231,9 @@ def encode_docs_from_images(model, processor, images, max_len, device, dtype):
     messages = [[{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": "Index this document page for retrieval."}]}] for _ in images]
     prompts = [processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=False) for msg in messages]
 
-    batch = processor(images=images, text=prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_len)
+    # Gemma-3 processor expects per-sample image lists aligned to each text prompt.
+    image_inputs = [[im] for im in images]
+    batch = processor(images=image_inputs, text=prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_len)
     batch = {k: v.to(device) for k, v in batch.items() if torch.is_tensor(v)}
 
     with torch.autocast(device_type="cuda", dtype=dtype if dtype != torch.float32 else torch.bfloat16, enabled=(dtype != torch.float32)):
