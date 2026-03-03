@@ -10,6 +10,7 @@ from io import BytesIO
 from pathlib import Path
 
 import torch
+import torch.nn.functional as F
 import torch.distributed as dist
 from PIL import Image
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -84,7 +85,7 @@ class ParquetImageResolver:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.index = {}
         self.materialized = {}
-        self._build_index()
+        self._indexed = False
 
     @staticmethod
     def _to_int(v):
@@ -101,6 +102,12 @@ class ParquetImageResolver:
             return False
         l = s.lower()
         return any(l.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"]) or "/" in s
+
+    def _ensure_index(self):
+        if self._indexed:
+            return
+        self._build_index()
+        self._indexed = True
 
     def _build_index(self):
         import glob
@@ -181,6 +188,8 @@ class ParquetImageResolver:
             if p.exists():
                 return str(p)
 
+        self._ensure_index()
+
         keys = []
         if did is not None:
             keys.extend([(did, pg), (did, None)])
@@ -202,51 +211,53 @@ class ParquetImageResolver:
 
 
 def encode_queries(model, tokenizer, texts, max_len, device, dtype):
-    q = tokenizer(texts, padding=True, truncation=True, max_length=max_len, return_tensors="pt")
+    m = model.module if hasattr(model, "module") else model
+    # Gemma-3 text path: use chat template so token routing matches model expectations.
+    messages = [[{"role": "user", "content": [{"type": "text", "text": t}]}] for t in texts]
+    prompts = [tokenizer.apply_chat_template(msg, tokenize=False, add_generation_prompt=False) for msg in messages]
+
+    q = tokenizer(prompts, padding=True, truncation=True, max_length=max_len, return_tensors="pt")
     q = {k: v.to(device) for k, v in q.items() if torch.is_tensor(v)}
+
     with torch.autocast(device_type="cuda", dtype=dtype if dtype != torch.float32 else torch.bfloat16, enabled=(dtype != torch.float32)):
-        m = model.module if hasattr(model, "module") else model
-        if any(p.requires_grad for p in m.backbone.parameters()):
-            out = m.backbone(**q)
-        else:
-            with torch.no_grad():
-                out = m.backbone(**q)
-        hs = out.last_hidden_state.to(m.head.proj.weight.dtype)
-        q_seq = m.head(hs)
-    return q_seq
+        q_seq = m(**q, is_document_indexing=False)
+        q_seq = F.normalize(q_seq, p=2, dim=-1)
+    return q_seq, q["attention_mask"]
 
 
 def encode_docs_from_images(model, processor, images, max_len, device, dtype):
-    prompts = ["Index this document page for retrieval."] * len(images)
+    m = model.module if hasattr(model, "module") else model
+    # Gemma-3 multimodal routing requires structured chat template with explicit image content.
+    messages = [[{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": "Index this document page for retrieval."}]}] for _ in images]
+    prompts = [processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=False) for msg in messages]
+
     batch = processor(images=images, text=prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_len)
     batch = {k: v.to(device) for k, v in batch.items() if torch.is_tensor(v)}
 
-    allowed = {
-        "input_ids", "attention_mask", "pixel_values", "image_sizes", "aspect_ratio_ids",
-        "aspect_ratio_mask", "token_type_ids", "position_ids",
-    }
-    fw = {k: v for k, v in batch.items() if k in allowed}
-
     with torch.autocast(device_type="cuda", dtype=dtype if dtype != torch.float32 else torch.bfloat16, enabled=(dtype != torch.float32)):
-        m = model.module if hasattr(model, "module") else model
-        if any(p.requires_grad for p in m.backbone.parameters()):
-            out = m.backbone(**fw)
-        else:
-            with torch.no_grad():
-                out = m.backbone(**fw)
-        hs = out.last_hidden_state.to(m.head.proj.weight.dtype)
-        d_seq = m.head(hs)
-    return d_seq, batch
+        d_seq = m(**batch, is_document_indexing=True)
+        d_seq = F.normalize(d_seq, p=2, dim=-1)
+    return d_seq, batch["attention_mask"], batch
 
 
-def inbatch_maxsim(q_seq, d_seq):
+def batched_maxsim(q_seq, d_seq, q_mask, d_mask):
     sims = torch.einsum("bqd,cpd->bcqp", q_seq, d_seq)
-    return sims.max(dim=-1).values.sum(dim=-1)
+    d_mask_ext = d_mask.view(1, d_seq.size(0), 1, d_seq.size(1)).bool()
+    sims = sims.masked_fill(~d_mask_ext, float("-inf"))
+    max_sims = sims.max(dim=-1).values
+    q_mask_ext = q_mask.view(q_seq.size(0), 1, q_seq.size(1)).bool()
+    max_sims = max_sims.masked_fill(~q_mask_ext, 0.0)
+    return max_sims.sum(dim=-1)
 
 
-def hardneg_maxsim(q_seq, hard_seq):
+def hardneg_maxsim(q_seq, hard_seq, q_mask, hard_mask):
     sims = torch.einsum("bqd,bnpd->bnqp", q_seq, hard_seq)
-    return sims.max(dim=-1).values.sum(dim=-1)
+    h_mask_ext = hard_mask.unsqueeze(2).bool()
+    sims = sims.masked_fill(~h_mask_ext, float("-inf"))
+    max_sims = sims.max(dim=-1).values
+    q_mask_ext = q_mask.unsqueeze(1).bool()
+    max_sims = max_sims.masked_fill(~q_mask_ext, 0.0)
+    return max_sims.sum(dim=-1)
 
 
 def main():
@@ -359,6 +370,7 @@ def main():
         trainable = sum(p.numel() for p in params)
         total = sum(p.numel() for p in model.module.parameters())
         print(f"trainable_params={trainable} total_params={total} pct={(100.0*trainable/max(1,total)):.4f}", flush=True)
+        print("step=0 loss=0.0000 eval_loss=na grad_norm=0.0000 lr=0.00000000", flush=True)
 
     default_globs = [
         "nvme_cache/raw/mpdocvqa-corpus/**/*.parquet",
@@ -382,10 +394,10 @@ def main():
 
         anchors = [my_rows[(step * args.batch_size + i) % len(my_rows)] for i in range(args.batch_size)]
         q_texts = [a.get("query", "") for a in anchors]
-        q_seq = encode_queries(model, tokenizer, q_texts, args.max_len, device, dtype)
+        q_seq, q_mask = encode_queries(model, tokenizer, q_texts, args.max_len, device, dtype)
 
         pos_images = [resolver.load_pil(a) for a in anchors]
-        pos_seq, pos_batch = encode_docs_from_images(model, model.module.processor, pos_images, args.max_len, device, dtype)
+        pos_seq, pos_mask, pos_batch = encode_docs_from_images(model, model.module.processor, pos_images, args.max_len, device, dtype)
 
         hard_imgs = []
         for a in anchors:
@@ -404,25 +416,27 @@ def main():
             hard_imgs.extend(this_h)
 
         if hard_imgs:
-            hard_seq_flat, _ = encode_docs_from_images(model, model.module.processor, hard_imgs, args.max_len, device, dtype)
+            hard_seq_flat, hard_mask_flat, _ = encode_docs_from_images(model, model.module.processor, hard_imgs, args.max_len, device, dtype)
             hard_seq = hard_seq_flat.view(args.batch_size, args.negatives_per_query, hard_seq_flat.shape[1], hard_seq_flat.shape[2])
+            hard_mask = hard_mask_flat.view(args.batch_size, args.negatives_per_query, hard_mask_flat.shape[1])
         else:
             hard_seq = None
+            hard_mask = None
 
-        pos_scores = maxsim_score(q_seq, pos_seq).unsqueeze(1)
+        all_sims = batched_maxsim(q_seq, pos_seq, q_mask, pos_mask)
+        pos_scores = torch.diag(all_sims).unsqueeze(1)
         logits_parts = [pos_scores]
 
-        if args.in_batch_negatives:
-            inb = inbatch_maxsim(q_seq, pos_seq)
+        if args.in_batch_negatives and args.batch_size > 1:
             mask = torch.eye(args.batch_size, dtype=torch.bool, device=device)
-            inb = inb.masked_fill(mask, float("-inf"))
+            inb = all_sims.masked_fill(mask, float("-inf"))
             logits_parts.append(inb)
 
         if hard_seq is not None:
-            hard_scores = hardneg_maxsim(q_seq, hard_seq)
+            hard_scores = hardneg_maxsim(q_seq, hard_seq, q_mask, hard_mask)
             logits_parts.append(hard_scores)
 
-        logits = torch.cat(logits_parts, dim=1) / args.temperature
+        logits = torch.cat(logits_parts, dim=1).to(torch.float32) / args.temperature
         labels = torch.zeros(logits.size(0), dtype=torch.long, device=device)
         loss = torch.nn.functional.cross_entropy(logits, labels)
 
@@ -434,21 +448,23 @@ def main():
         optimizer.step()
 
         if step % args.eval_every == 0:
+            model.eval()
             with torch.no_grad():
                 eval_losses = []
                 for bi in range(max(1, args.eval_batches)):
                     a = my_eval[(step + bi) % len(my_eval)]
-                    qe = encode_queries(model.module, tokenizer, [a.get("query", "")], args.max_len, device, dtype)
-                    pe, _ = encode_docs_from_images(model.module, model.module.processor, [resolver.load_pil(a)], args.max_len, device, dtype)
+                    qe, qme = encode_queries(model.module, tokenizer, [a.get("query", "")], args.max_len, device, dtype)
+                    pe, pme, _ = encode_docs_from_images(model.module, model.module.processor, [resolver.load_pil(a)], args.max_len, device, dtype)
 
                     n_rows = [choose_neg(a, my_eval, by_doc_eval, intra_doc=args.intra_doc_negatives) for _ in range(max(1, args.negatives_per_query))]
                     n_imgs = [resolver.load_pil(nr) for nr in n_rows]
-                    ne_flat, _ = encode_docs_from_images(model.module, model.module.processor, n_imgs, args.max_len, device, dtype)
+                    ne_flat, nme_flat, _ = encode_docs_from_images(model.module, model.module.processor, n_imgs, args.max_len, device, dtype)
                     ne = ne_flat.unsqueeze(0)
+                    nme = nme_flat.unsqueeze(0)
 
-                    pos = maxsim_score(qe, pe).unsqueeze(1)
-                    neg = hardneg_maxsim(qe, ne)
-                    lg = torch.cat([pos, neg], dim=1) / args.temperature
+                    pos = batched_maxsim(qe, pe, qme, pme).diag().unsqueeze(1)
+                    neg = hardneg_maxsim(qe, ne, qme, nme)
+                    lg = torch.cat([pos, neg], dim=1).to(torch.float32) / args.temperature
                     lb = torch.zeros(1, dtype=torch.long, device=device)
                     e_loss = torch.nn.functional.cross_entropy(lg, lb)
                     eval_losses.append(e_loss.detach())
@@ -458,6 +474,7 @@ def main():
                 dist.all_reduce(eval_global, op=dist.ReduceOp.SUM)
                 eval_global = eval_global / world_size
                 last_eval = float(eval_global.item())
+            model.train()
 
         if step % args.log_every == 0 and local_rank == 0:
             eval_str = f"{last_eval:.4f}" if last_eval is not None else "na"

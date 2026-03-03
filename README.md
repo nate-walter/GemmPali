@@ -234,3 +234,23 @@ A dedicated cyberpunk training dashboard now exists under:
 ## Operational checklist
 
 See `CHECKLIST.md` for the active execution plan and gates.
+
+## Fresh update (2026-03-02, 21:35 EST)
+
+- DeepThink response-6 ingested and applied as a hard reset over Phase4 Run-D.
+- Root findings from response-6 (confirmed):
+  - wrapper path was being bypassed in parts of the training flow,
+  - multimodal prompt/template + wrapper interface mismatch,
+  - MaxSim masking/normalization stability risks,
+  - eval-mode discipline required for trustworthy telemetry.
+- Phase4 code-level reset applied:
+  - `src/model_wrapper.py` forward updated to accept multimodal kwargs (`input_ids`, `attention_mask`, `pixel_values`, etc.)
+  - `scripts/train_phase4_vision.py` updated with wrapper-based forward path, L2 normalization, masked MaxSim utilities, FP32 logits before temperature division, and eval `model.eval()/model.train()` discipline.
+  - `scripts/launch_phase4_runD_vision.sh` reset config aligned to response-6 direction (`lr=2e-5`, `batch_size=2`, `negatives_per_query=1`, fallback notes).
+- Run restarted from scratch:
+  - New live log: `/home/nate/GemmPali/reports/phase4_runD_vision_current.log`
+  - New run nohup: `phase4_runD_vision_nohup_20260302-212937.log`
+- Existing iPhone Expo console remains the same URL/port (no app switch required):
+  - Dashboard/API: `http://10.46.150.108:3474`
+  - Expo Go: `exp://10.46.150.108:8084`
+

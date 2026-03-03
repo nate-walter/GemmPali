@@ -160,3 +160,13 @@ Updated: 2026-03-02
 - [x] README/CHECKLIST updated and committed.
 - [x] Launch Phase4 Run-D vision training and monitor first 250-step smoke gate.
 
+## 2026-03-02 deepthink-r6 phase4 hard reset
+- [x] Read and applied `docs/deepthink/deepthink-response-6.md`.
+- [x] Patched wrapper forward to accept multimodal kwargs (`src/model_wrapper.py`).
+- [x] Patched Phase4 trainer for wrapper-first path + L2-normalized sequences + masked MaxSim + FP32 logits + eval mode discipline.
+- [x] Updated launcher defaults per r6 guidance (`lr=2e-5`, `batch-size=2`, `negatives-per-query=1`).
+- [x] Restarted Phase4 Run-D from scratch with new log pointer (`phase4_runD_vision_current.log`).
+- [x] Kept existing GemmPali Expo console endpoints unchanged (:3474 / :8084).
+- [ ] Pass 250-step smoke acceptance criteria from response-6.
+- [ ] Run 2k-step mid-gate + raw-image harness and decide promote/kill.
+

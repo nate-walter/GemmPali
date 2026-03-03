@@ -108,15 +108,24 @@ class MultiPageRetrieverWrapper(nn.Module):
     def generate_mask(self, seq_len: int, is_document_indexing: bool, device: torch.device) -> torch.Tensor:
         return build_mask(seq_len, is_document_indexing, device=device, dtype=torch.float32)
 
-    def forward(self, input_ids: torch.Tensor, is_document_indexing: bool = True) -> torch.Tensor:
-        # For smoke: text-token path only; multi-page image path comes next iteration.
+    def forward(self, input_ids: torch.Tensor = None, is_document_indexing: bool = True, **kwargs) -> torch.Tensor:
+        # Accept full multimodal kwargs (input_ids, attention_mask, pixel_values, etc.)
+        if input_ids is None:
+            input_ids = kwargs.get("input_ids")
+        if input_ids is None:
+            raise ValueError("MultiPageRetrieverWrapper.forward requires input_ids")
+
         attn = self.generate_mask(input_ids.shape[1], is_document_indexing, input_ids.device)
         _ = attn  # reserved for future custom attention hooks
+
+        fw = dict(kwargs)
+        fw["input_ids"] = input_ids
+
         if any(p.requires_grad for p in self.backbone.parameters()):
-            out = self.backbone(input_ids=input_ids)
+            out = self.backbone(**fw)
         else:
             with torch.no_grad():
-                out = self.backbone(input_ids=input_ids)
+                out = self.backbone(**fw)
         hidden_states = out.last_hidden_state
         hidden_states = self.rope3d(hidden_states)
         hidden_states = hidden_states.to(self.head.proj.weight.dtype)
