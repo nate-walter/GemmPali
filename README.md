@@ -254,3 +254,18 @@ See `CHECKLIST.md` for the active execution plan and gates.
   - Dashboard/API: `http://10.46.150.108:3474`
   - Expo Go: `exp://10.46.150.108:8084`
 
+## Fresh update (2026-03-02, 23:36 EST)
+
+- Phase4 Run-D (DeepThink r6 reset) encountered repeated OOM during multimodal vision tower forward.
+- Confirmed fallback path execution:
+  - `max_len` reduced from 4096 -> 2048.
+  - `batch_size` reduced from 2 -> 1.
+  - hard negatives remain enabled (`negatives_per_query=1`), intra-doc negatives remain enabled.
+  - in-batch negatives still configured but effectively inactive at batch_size=1.
+- Relaunched with fallback settings:
+  - log: `/home/nate/GemmPali/reports/phase4_runD_vision_nohup_20260302-233422.log`
+  - live pointer: `/home/nate/GemmPali/reports/phase4_runD_vision_current.log`
+- Expo console remains unchanged:
+  - Dashboard/API: `http://10.46.150.108:3474`
+  - Expo Go: `exp://10.46.150.108:8084`
+

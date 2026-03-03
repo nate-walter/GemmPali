@@ -170,3 +170,11 @@ Updated: 2026-03-02
 - [ ] Pass 250-step smoke acceptance criteria from response-6.
 - [ ] Run 2k-step mid-gate + raw-image harness and decide promote/kill.
 
+## 2026-03-02 phase4 runtime fallback (23:36 EST)
+- [x] Diagnose latest Phase4 crash: OOM in Gemma3 vision tower during hard-negative image encoding.
+- [x] Apply fallback 1: `--max-len 2048`.
+- [x] Apply fallback 2: `--batch-size 1`.
+- [x] Keep hard negatives (`--negatives-per-query 1`) + intra-doc negatives on.
+- [x] Relaunch run and re-point `phase4_runD_vision_current.log`.
+- [ ] Verify first stable >250-step window without OOM.
+

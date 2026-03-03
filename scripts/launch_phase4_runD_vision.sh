@@ -26,7 +26,7 @@ torchrun --standalone --nproc_per_node=2 scripts/train_phase4_vision.py \
   --pairs "$PAIRS" \
   --model "$MODEL" \
   --steps 8000 \
-  --max-len 4096 \
+  --max-len 2048 \
   --dtype bf16 \
   --lr 2e-5 \
   --scheduler cosine_with_warmup \
@@ -34,7 +34,7 @@ torchrun --standalone --nproc_per_node=2 scripts/train_phase4_vision.py \
   --temperature 0.05 \
   --max-grad-norm 1.0 \
   --max-grad-value 0.1 \
-  --batch-size 2 \
+  --batch-size 1 \
   --negatives-per-query 1 \
   --intra-doc-negatives true \
   --in-batch-negatives true \
@@ -53,7 +53,7 @@ cat <<'DONE'
 Run completed.
 
 Escalation / fallback path:
-1) Current defaults follow DeepThink-r6 reset: --lr 2e-5, --batch-size 2, --negatives-per-query 1
+1) Current defaults follow DeepThink-r6 reset: --lr 2e-5, --batch-size 1, --negatives-per-query 1
 2) If OOM appears: set --max-len 2048 and keep --negatives-per-query 1
 3) If still OOM: set --batch-size 1 and optionally disable --in-batch-negatives
 DONE
