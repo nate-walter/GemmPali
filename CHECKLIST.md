@@ -209,3 +209,47 @@ Updated: 2026-03-05
 - [x] Compared against ColQwen2/2.5 baseline artifacts.
 - [x] Recorded milestone + exact data/QA genesis paths in formal report.
 - [ ] Next: close gap to ColQwen hit@10 while preserving validated multipage behavior.
+- [x] DeepThink prompt lock: use `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/deepthink-prompt-r12-3-global-mix-correction.md` with globalized spec; do not run CGI-only prompt paths.
+
+## 2026-03-05 phase5 globalization execution
+- [x] Lock mission to general GemmPali (non-CGI-centric) per DeepThink r12-3.
+- [x] Pause Judge Benchmark and reclaim GPU 0 to prevent OOM risk.
+- [x] Document Judge Benchmark restart/stop runbook in README.
+- [x] Add 3-GPU Track A1 launcher (`scripts/launch_phase5_trackA1_global_3gpu.sh`) using GPUs 0,3,4.
+- [x] Build global Phase 5 unrolled mix via `scripts/prepare_phase5_global_data.py`.
+- [x] Materialize `/home/nate/GemmPali/nvme_cache/processed/phase5_global/phase5_unrolled_mix.jsonl` (40k rows, 25/35/20/20 mix).
+- [x] Launch Track A1 (3-GPU) using scripts/launch_phase5_trackA1_global_3gpu.sh.
+- [x] Patch `train_phase4_vision.py` to DeepThink sibling-masked miner (`expected_pages_all` exclusion) and clean-restart Track A1.
+- [~] Monitor checkpoint gates at 2k / 4k / 8k and publish scorecards.
+- [ ] Publish gate scorecards: ViDoRe Hit@10 floor, CPCR@10 >= 0.35, CGI TRR <= 0.40.
+
+
+## 2026-03-05 15:11 detailed status + next phases
+
+### Current state snapshot
+- [x] Track A1 clean-restarted after sibling-mask patch (no pre-patch contamination).
+- [~] A1 run is active on 3-GPU DDP (`0,3,4`) under OOM-safe settings.
+- [x] Judge Benchmark paused and documented for later resume.
+
+### A1 execution gates (required before A2)
+- [ ] Step 2000 forensic scorecard captured (ViDoRe Hit@10 / CPCR@10 / CGI TRR).
+- [ ] Step 4000 forensic scorecard captured (ViDoRe Hit@10 / CPCR@10 / CGI TRR).
+- [ ] Step 8000 forensic scorecard captured (ViDoRe Hit@10 / CPCR@10 / CGI TRR).
+- [ ] A1 gate verdict recorded (PASS/FAIL with evidence links).
+
+### A2 preparation (only after A1 gate verdict)
+- [ ] Add `--gradient-accumulation-steps` support in `scripts/train_phase4_vision.py`.
+- [ ] Create `launch_phase5_trackA2_global_3gpu.sh` (`batch-size=1`, grad-accum=4).
+- [ ] Keep sibling masking identical to A1 (no miner changes during A2).
+
+### B phase preparation (capacity unlock)
+- [ ] Add MLP LoRA targets (`gate_proj|up_proj|down_proj`) behind explicit Track B config.
+- [ ] Define VRAM safety fallback and abort thresholds before B launch.
+
+### C phase preparation (conditional)
+- [ ] Create temperature sweep config (0.05 -> 0.04) gated on TRR > 0.40 after B.
+
+### Deployment gate
+- [ ] Confirm BOTH conditions before any deployment claim:
+  - [ ] Multipage consistency gains hold (CPCR up + TRR down)
+  - [ ] Global mixed-domain quality is preserved or improved (no CGI-only overfit)

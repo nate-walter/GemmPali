@@ -8,6 +8,8 @@ GemmPali is **not a CGI-specialist model**.
 
 Our objective is broad multi-page dominance vs ColQwen across diverse document regimes (reports, technical docs, forms, layouts, cross-page tables/charts), with CGI annual reports used only as one supplemental stress domain.
 
+Prompt lock reminder: if drafting/refreshing DeepThink plans, enforce the same mission framing (general model lane + CGI forensic lane), never CGI-only training framing.
+
 ## Current status
 
 
@@ -331,3 +333,92 @@ See `CHECKLIST.md` for the active execution plan and gates.
   - Phase4 run not active after OOM fail.
   - next planned move: fallback from r7 aggression while preserving its math fixes (checkpointing + normalized MaxSim).
 
+## GPU Reallocation Note (2026-03-05) - Judge Benchmark paused for GemmPali Phase 5
+
+GPU 0 was intentionally reclaimed from Judge Benchmark to avoid OOM risk for Phase 5 GemmPali 3-GPU DDP.
+
+- Phase 5 launch script: `scripts/launch_phase5_trackA1_global_3gpu.sh`
+- Sigma restart command for Judge Benchmark is documented in `/home/nate/GemmPali/README.md` on Sigma.
+
+## Phase 5 Global Blueprint (Active, 2026-03-05)
+
+This phase follows DeepThink r12-3 globalization protocol exactly.
+
+- Global train/eval substrate ratio: **25% ViDoRe / 35% MP-DocVQA / 20% DUDE / 20% CGI**
+- Two-lane protocol:
+  - **Lane 1:** General training lane (`train_phase4_vision.py` DDP)
+  - **Lane 2:** Forensic diagnostic lane (CPCR/TRR + ViDoRe anti-forgetting checks)
+- OOM prevention posture:
+  - Judge Benchmark paused to reclaim GPU 0
+  - Track A1 runs on **3 GPUs (0,3,4)**
+  - `batch-size=1`, `in-batch-negatives=false` for collision/OOM safety
+
+### Phase 5 scripts
+- Data prep: `scripts/prepare_phase5_global_data.py`
+- Launch (Track A1, 3-GPU): `scripts/launch_phase5_trackA1_global_3gpu.sh`
+
+### Current Phase 5 data artifact
+- `/home/nate/GemmPali/nvme_cache/processed/phase5_global/phase5_unrolled_mix.jsonl` (40,000 rows)
+- Mix counts: 10,000 ViDoRe / 14,000 MP-DocVQA / 8,000 DUDE / 8,000 CGI
+
+### Current execution status
+- Track A1 launched on Sigma via `scripts/launch_phase5_trackA1_global_3gpu.sh`
+- Active training command uses `torchrun --nproc_per_node=3` on GPUs `0,3,4`
+- Live log: `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu.nohup.log`
+- Structured run log: `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu.log`
+- Alignment patch applied: `scripts/train_phase4_vision.py` now uses DeepThink sibling-masked `choose_neg` with `expected_pages_all` exclusion.
+- Run was clean-restarted after patch to ensure no pre-patch steps contaminate Track A1 metrics.
+
+
+## Phase 5 Live Status Snapshot (2026-03-05 15:11 EST)
+
+### Where we are now
+- Track: **A1 (Baseline Fix)**
+- Run: `phase5_trackA1_global_3gpu`
+- Launcher: `scripts/launch_phase5_trackA1_global_3gpu.sh`
+- GPUs: `0,3,4` (GPU0 reclaimed from paused Judge Benchmark)
+- Training script: `scripts/train_phase4_vision.py`
+- Critical alignment: sibling-masked negative miner active (`expected_pages_all` exclusion + adjacent hard-trap priority)
+- Data artifact: `/home/nate/GemmPali/nvme_cache/processed/phase5_global/phase5_unrolled_mix.jsonl`
+  - 40,000 rows (10k ViDoRe / 14k MP-DocVQA / 8k DUDE / 8k CGI)
+
+### Current OOM posture
+- `batch-size=1`
+- `in-batch-negatives=false`
+- 4-bit backbone load
+- 3-GPU DDP spread to reduce per-device pressure
+
+### Live logs / checks
+- Structured log: `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu.log`
+- Nohup log: `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu.nohup.log`
+- Process check:
+  - `pgrep -af 'torchrun --standalone --nproc_per_node=3 scripts/train_phase4_vision.py'`
+- GPU check:
+  - `nvidia-smi --query-gpu=index,utilization.gpu,memory.used,memory.total --format=csv,noheader`
+
+## Next Planned Phases (DeepThink Blueprint, no freestyle)
+
+### A1 completion gates (must pass first)
+At steps **2000 / 4000 / 8000**, run forensic lane scorecards and verify:
+1. ViDoRe Hit@10 >= Phase 4 baseline (anti-forgetting guard)
+2. Global CPCR@10 >= 0.35
+3. CGI TRR <= 0.40
+
+### Phase A2 (Global pressure, collision-safe)
+- Keep unrolling + sibling masking unchanged
+- Keep `batch-size=1`
+- Add gradient accumulation as instructed (`gradient_accumulation_steps=4`) once trainer arg is wired
+- Objective: improve global separation without in-batch sibling collision risk
+
+### Phase B (Capacity unlock)
+- A2 + LoRA expansion to MLP stack (`gate_proj|up_proj|down_proj`)
+- Maintain strict VRAM monitoring; if memory risk appears, do not increase batch
+
+### Phase C (Temperature scalpel, conditional)
+- Execute only if TRR remains > 0.40 after Phase B
+- Sweep `temperature: 0.05 -> 0.04`
+
+### Final Go / No-Go
+Deployment readiness requires BOTH:
+1. Multipage consistency breakthrough holds (CPCR up, TRR down)
+2. Global mixed-domain parity/lead is preserved (no CGI-overfit regression)
