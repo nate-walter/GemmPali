@@ -13,6 +13,21 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 
 ## Fresh update (2026-03-05, 08:05 EST)
 
+
+## Seed stability update (2026-03-05, 09:55 EST)
+
+Corrected raw-image harness seed sweep completed (3 seeds, 100 samples each) on `head_step_0008000.pt`:
+
+- Hit@1 mean: **0.1967** (std 0.0330, min 0.15, max 0.22)
+- Hit@5 mean: **0.4267** (std 0.0499, min 0.36, max 0.48)
+- MRR@10 mean: **0.2994** (std 0.0251, min 0.2705, max 0.3316)
+- NDCG@10 mean: **0.3708** (std 0.0217, min 0.3540, max 0.4015)
+- CPCR mean: **0.4267** (std 0.0499, min 0.36, max 0.48)
+- Latency mean: **10.69s/query** (std 1.21s)
+
+Interpretation: quality gains are stable across seeds on the corrected test path; latency remains the primary optimization target.
+
+
 - Phase4 Run-D vision completed at 8000/8000 and passed corrected raw-image harness evaluation.
 - Corrected harness result (step 8000) vs prior step-1000 baseline:
   - Hit@1: **0.185** (from 0.050, +0.135)

@@ -193,5 +193,11 @@ Updated: 2026-03-05
 - [x] Completed corrected raw-image harness for `head_step_0008000.pt`.
 - [x] Recorded final metrics at step-8000: Hit@1 0.185, Hit@5 0.445, MRR@10 0.29796, NDCG@10 0.37096, CPCR 0.445.
 - [x] Confirmed large quality gain versus step-1000 baseline on corrected path.
-- [ ] Next: optimize latency/throughput for deployment-grade retrieval path.
+- [ ] Next: optimize latency/throughput for deployment-grade retrieval path (post seed-stability confirmation).
+
+## 2026-03-05 seed stability (corrected harness)
+- [x] Completed 3-seed sweep at 100 samples/seed (seeds: 42, 123, 777)
+- [x] Wrote outputs to `reports/seed_stability_2026-03-05/`
+- [x] Confirmed stable quality means with moderate variance (Hit@1 std 0.033, NDCG@10 std 0.0217)
+- [ ] Decide deployment profile: quality-first vs latency-balanced retrieval mode
 
