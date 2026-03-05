@@ -201,3 +201,11 @@ Updated: 2026-03-05
 - [x] Confirmed stable quality means with moderate variance (Hit@1 std 0.033, NDCG@10 std 0.0217)
 - [ ] Decide deployment profile: quality-first vs latency-balanced retrieval mode
 
+
+
+## 2026-03-05 three-step multipage validation milestone
+- [x] Ran GemmPali step-8000 multipage validation on CGI-2019 DeepThink QA set.
+- [x] Ran vanilla Gemma3 control on same multipage test path.
+- [x] Compared against ColQwen2/2.5 baseline artifacts.
+- [x] Recorded milestone + exact data/QA genesis paths in formal report.
+- [ ] Next: close gap to ColQwen hit@10 while preserving validated multipage behavior.

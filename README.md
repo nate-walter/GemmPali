@@ -14,6 +14,26 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 ## Fresh update (2026-03-05, 08:05 EST)
 
 
+
+## Three-step multipage validation protocol (milestone locked: 2026-03-05)
+
+We formally validated multipage retrieval signal using a 3-step protocol:
+
+1) **GemmPali step-8000** on CGI-2019 DeepThink QA set
+2) **Vanilla Gemma3 control** (same script/data, untrained/random head)
+3) **ColQwen2/2.5 baseline** from existing full-PDF benchmark artifacts
+
+Key readout:
+- GemmPali shows non-zero multipage retrieval signal (`multipage_hit@5 = 0.25`) and outperforms vanilla control (`0.00`) on the same multipage subset.
+- ColQwen baselines remain stronger on hit@10 in this slice, so mission status is: **functional signal confirmed, optimization gap remains**.
+
+Canonical milestone report:
+- `reports/multipage_validation/VALIDATION-THREE-STEP-MILESTONE-2026-03-05.md`
+
+Canonical data/QA genesis:
+- PDF: `/home/nate/ColPali/CGI-Annual-Reports-PDFs/cgi-2019-annual-report.pdf`
+- QA: `/home/nate/ColPali/upgrading_team_qdrant_colpali_NBs/DeepThink/2026-02-24-cgi2019-qa-full.json`
+
 ## Seed stability update (2026-03-05, 09:55 EST)
 
 Corrected raw-image harness seed sweep completed (3 seeds, 100 samples each) on `head_step_0008000.pt`:
