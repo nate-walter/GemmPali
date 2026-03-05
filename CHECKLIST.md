@@ -1,6 +1,6 @@
 # GemmPali CHECKLIST (SOTA Multi-Page Program)
 
-Updated: 2026-03-02
+Updated: 2026-03-05
 
 ## Mission lock
 - [x] GemmPali is **NOT CGI-centric**.
@@ -167,8 +167,8 @@ Updated: 2026-03-02
 - [x] Updated launcher defaults per r6 guidance (`lr=2e-5`, `batch-size=2`, `negatives-per-query=1`).
 - [x] Restarted Phase4 Run-D from scratch with new log pointer (`phase4_runD_vision_current.log`).
 - [x] Kept existing GemmPali Expo console endpoints unchanged (:3474 / :8084).
-- [ ] Pass 250-step smoke acceptance criteria from response-6.
-- [ ] Run 2k-step mid-gate + raw-image harness and decide promote/kill.
+- [x] Pass 250-step smoke acceptance criteria from response-6.
+- [x] Run corrected raw-image harness at step-8000 and record results (quality lift confirmed).
 
 ## 2026-03-02 phase4 runtime fallback (23:36 EST)
 - [x] Diagnose latest Phase4 crash: OOM in Gemma3 vision tower during hard-negative image encoding.
@@ -188,4 +188,10 @@ Updated: 2026-03-02
 - [x] Captured failure in `reports/phase4_smoke_r7_50.log`.
 - [ ] Relaunch with constrained runtime tuple preserving r7 code fixes.
 - [ ] Re-run 250/1000 gate and corrected head-to-head protocol.
+
+## 2026-03-05 phase4 corrected-harness result
+- [x] Completed corrected raw-image harness for `head_step_0008000.pt`.
+- [x] Recorded final metrics at step-8000: Hit@1 0.185, Hit@5 0.445, MRR@10 0.29796, NDCG@10 0.37096, CPCR 0.445.
+- [x] Confirmed large quality gain versus step-1000 baseline on corrected path.
+- [ ] Next: optimize latency/throughput for deployment-grade retrieval path.
 

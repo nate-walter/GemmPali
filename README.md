@@ -10,6 +10,19 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 
 ## Current status
 
+
+## Fresh update (2026-03-05, 08:05 EST)
+
+- Phase4 Run-D vision completed at 8000/8000 and passed corrected raw-image harness evaluation.
+- Corrected harness result (step 8000) vs prior step-1000 baseline:
+  - Hit@1: **0.185** (from 0.050, +0.135)
+  - Hit@5: **0.445** (from 0.150, +0.295)
+  - MRR@10: **0.29796** (from 0.10681, +0.19115)
+  - NDCG@10: **0.37096** (from 0.15374, +0.21721)
+  - CPCR: **0.445** (from 0.150, +0.295)
+- Net: substantial retrieval-quality lift confirmed on the corrected test path.
+- Caveat: latency is materially higher in this heavy raw-image setting (~9.93s/query avg).
+
 ## Fresh update (2026-03-02, 11:20 EST)
 
 - DeepThink response-5 forensic diagnosis accepted: Phase3 surrogate-text path was bypassing true vision learning.
