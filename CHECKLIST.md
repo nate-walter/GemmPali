@@ -232,7 +232,9 @@ Updated: 2026-03-06
 - [x] Judge Benchmark paused and documented for later resume.
 
 ### A1 execution gates (required before A2)
-- [~] Forensic gate runner launched on Sigma (`/tmp/run_phase5_a1_forensic_gates.sh`) writing to `reports/phase5_trackA1_global_3gpu_forensic/`.
+- [x] Raw-image scorecards were generated for 2k/4k/8k in `reports/phase5_trackA1_global_3gpu_forensic/` (first pass).
+- [x] First pass exposed a harness gap: output lacked required ViDoRe split Hit@10 + CGI TRR fields for strict DeepThink gate closure.
+- [~] Re-run launched with patched eval-only harness (no training changes) via `/tmp/run_phase5_a1_forensic_gates_v2.sh`, writing to `reports/phase5_trackA1_global_3gpu_forensic_v2/`.
 - [ ] Step 2000 forensic scorecard captured (ViDoRe Hit@10 / CPCR@10 / CGI TRR).
 - [ ] Step 4000 forensic scorecard captured (ViDoRe Hit@10 / CPCR@10 / CGI TRR).
 - [ ] Step 8000 forensic scorecard captured (ViDoRe Hit@10 / CPCR@10 / CGI TRR).
@@ -276,7 +278,7 @@ Updated: 2026-03-06
   - `--lr 2e-5`
   - `--max-len 4096`
 - [x] Verify live run shows true batch-2 + hard-neg behavior in logs (`pixel_values_shape=(2,...)`, `hard_seq=(2,3,...)`).
-- [ ] Publish 2k/4k/8k forensic scorecards for corrected exact-spec run.
+- [~] Publish 2k/4k/8k forensic scorecards for corrected exact-spec run (first pass done; v2 re-run in progress for full DeepThink gate fields ViDoRe Hit@10 + CGI TRR + CPCR@10).
 
 ### Curiosity-only postmortem lane (watered-down A1 run)
 - [x] Mark this lane as non-primary and non-blocking relative to exact-spec run.

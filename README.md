@@ -409,7 +409,10 @@ This phase follows DeepThink r12-3 globalization protocol exactly.
 - Live log: `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu.nohup.log`
 - Structured run log: `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu.log`
 - Alignment patch applied: `scripts/train_phase4_vision.py` uses DeepThink sibling-masked `choose_neg` with `expected_pages_all` exclusion.
-- Post-run action in progress: A1 forensic gate eval for checkpoints **2000/4000/8000** (scorecards pending).
+- Post-run action update:
+  - First forensic pass completed for checkpoints **2000/4000/8000** at `reports/phase5_trackA1_global_3gpu_forensic/`.
+  - First pass confirmed CPCR signal but did not emit required DeepThink gate fields (ViDoRe split Hit@10 + CGI TRR).
+  - DeepThink-complete re-run is now active at `reports/phase5_trackA1_global_3gpu_forensic_v2/` using eval-only harness patch (no training/model changes).
 
 
 ## Phase 5 Live Status Snapshot (2026-03-05 15:11 EST)
@@ -451,6 +454,10 @@ At steps **2000 / 4000 / 8000**, run forensic lane scorecards and verify:
 1. ViDoRe Hit@10 >= Phase 4 baseline (anti-forgetting guard)
 2. Global CPCR@10 >= 0.35
 3. CGI TRR <= 0.40
+
+Current gate status:
+- First pass scorecards (2k/4k/8k) completed and archived.
+- Formal gate closure is pending v2 scorecards because strict gate fields must include **ViDoRe split Hit@10 + CGI TRR + CPCR@10** in the output schema.
 
 ### Phase A2 (Global pressure, collision-safe)
 - Keep unrolling + sibling masking unchanged
