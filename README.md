@@ -232,6 +232,29 @@ Telemetry note:
 - `live_status.txt` is canary-oriented and may appear stale during formal 2k/4k/8k phases.
 - Source of truth during formal gates is `auto_chain.log` + active process args + scorecard artifact presence.
 
+## Fresh update (2026-03-09, 11:35 EST) — CGI forensic bug identified (root cause)
+
+Critical finding:
+- Current forensic harness was excluding **all CGI rows** from `usable` candidate set.
+- Result: `cgi_rows=0` and `cgi_trr=null` in 2k/4k scorecards, so TRR gate was not evaluable.
+
+Root cause (eval harness logic):
+- `ParquetImageResolver.has_candidate()` / `resolve()` only checked:
+  1) `target_doc_id` as a direct filesystem path, or
+  2) parquet index keys (`target_doc_id`, `target_page`).
+- CGI rows in phase5 mix use explicit `image_path` (`.../nvme_cache/raw/cgi2019_pages/page_XXXX.png`) and do not resolve through parquet key path.
+- Harness did not consider `image_path`/`target_image_path`/`doc_image_path`/`path` as direct candidate sources.
+
+Observed evidence:
+- Mix composition includes 8000 CGI rows (`40k` total mix).
+- `usable` composition under current logic: 32000 rows with `cgi=0`.
+- 2k/4k scorecards both report `cgi_rows=0` and `cgi_trr=null`.
+
+Recovery plan (integrity-locked):
+- Patch resolver eligibility + path resolution to honor explicit row image fields (`image_path`, `target_image_path`, `doc_image_path`, `path`) before parquet fallback.
+- Keep retrieval/scoring/metrics math unchanged.
+- Relaunch forensic gate chain after patch so CGI TRR becomes evaluable at 2k/4k/8k.
+
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
 This is an explicit accountability log.

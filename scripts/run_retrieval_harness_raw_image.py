@@ -216,6 +216,14 @@ class ParquetImageResolver:
         did = row.get("target_doc_id")
         pg = self._to_int(row.get("target_page"))
 
+        # First-class direct image path support (needed for CGI rows in phase5 mix).
+        for k in ("image_path", "target_image_path", "doc_image_path", "path"):
+            v = row.get(k)
+            if isinstance(v, str) and v:
+                p = Path(v)
+                if p.exists():
+                    return str(p)
+
         if isinstance(did, str):
             p = Path(did)
             if p.exists():
@@ -234,6 +242,12 @@ class ParquetImageResolver:
         """Fast existence check without materializing image bytes to disk."""
         did = row.get("target_doc_id")
         pg = self._to_int(row.get("target_page"))
+
+        # First-class direct image path support (needed for CGI rows in phase5 mix).
+        for k in ("image_path", "target_image_path", "doc_image_path", "path"):
+            v = row.get(k)
+            if isinstance(v, str) and v and Path(v).exists():
+                return True
 
         if isinstance(did, str):
             p = Path(did)

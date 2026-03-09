@@ -122,6 +122,9 @@ Execution lock reminder:
 - [x] 2026-03-09 formal 2k forensic gate completed (`scorecard_step_0002000.json`, 200 samples).
 - [~] 2026-03-09 formal 4k forensic gate in progress; 8k queued behind 4k completion.
 - [x] 2026-03-09 2k gate snapshot logged: `vidore_hit10=0.6389`, `CPCR@10=0.4900` (passes CPCR gate `>=0.35`), `cgi_trr` not evaluable at 2k (`cgi_rows=0`).
+- [x] 2026-03-09 root cause identified for `cgi_rows=0`: eval resolver excluded CGI explicit `image_path` rows from `usable` set (eligibility logic only used target_doc_id/parquet-key pathing).
+- [ ] 2026-03-09 patch resolver (`has_candidate` + `resolve`) to honor explicit row image fields (`image_path`, `target_image_path`, `doc_image_path`, `path`) before parquet fallback.
+- [ ] 2026-03-09 relaunch forensic 2k/4k/8k with patched resolver and verify CGI rows appear in scorecards (`cgi_rows>0`) and CGI TRR is evaluable.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
