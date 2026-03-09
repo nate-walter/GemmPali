@@ -128,7 +128,12 @@ Execution lock reminder:
 - [x] 2026-03-09 TRR evaluability root cause identified: random global negative sampling did not guarantee same-doc adjacent trap candidates for CGI rows.
 - [x] 2026-03-09 patch applied: inject same-doc adjacent-page negatives for CGI rows before random negative fill (scoring math unchanged).
 - [~] 2026-03-09 clean forensic chain rerun started under TRR patch (restart at 2k; then 4k -> 8k).
-- [ ] 2026-03-09 verify new scorecards report `cgi_adjacent_available>0` and non-null `cgi_trr`.
+- [x] 2026-03-09 TRR evaluability analysis complete: CGI candidate pool currently has no adjacent non-expected trap pages (`cgi_adjacent_available=0` by construction), so TRR is non-evaluable in current mix.
+- [x] 2026-03-09 operator decision: proceed with forensic gate decisioning **without CGI TRR** for current cycle.
+- [x] 2026-03-09 2k gate (TRR excluded) PASS:
+  - `CPCR@10=0.5700` (passes `>=0.35`)
+  - `vidore_hit10=0.7333` (floor hold)
+  - core metrics: `Hit@10=0.605`, `MRR@10=0.3079`, `NDCG@10=0.3775`.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
