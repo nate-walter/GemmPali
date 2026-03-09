@@ -221,8 +221,12 @@ What was fixed and verified:
 
 Formal gate status (this checkpoint):
 - Canary artifact completed: `scorecard_step_0002000_canary10_gpu.json`.
-- Auto-chain promoted to **formal 2k** run (`--samples 200`, output `scorecard_step_0002000.json`).
-- Formal 4k/8k remain queued behind 2k completion.
+- Formal **2k** run completed (`scorecard_step_0002000.json`, 200 samples).
+- Auto-chain is now on formal **4k** (`--samples 200`, output `scorecard_step_0004000.json`) with **8k queued**.
+- 2k gate readout snapshot:
+  - `vidore_hit10 = 0.6389`
+  - `CPCR@10 = 0.4900` (above `>= 0.35` gate)
+  - `cgi_trr = null` at 2k due to zero CGI rows in sampled slice (`cgi_rows=0`, `cgi_adjacent_available=0`).
 
 Telemetry note:
 - `live_status.txt` is canary-oriented and may appear stale during formal 2k/4k/8k phases.

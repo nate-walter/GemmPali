@@ -119,7 +119,9 @@ Execution lock reminder:
 - [x] 2026-03-08 terminology lock: distinguish `2k-checkpoint canary running` from `formal 2k gate run started` in status reports.
 - [x] 2026-03-09 per-image fallback hardening applied in `run_retrieval_harness_raw_image.py` to prevent image-token mismatch crash loops (`Prompt contained 0 image tokens but received 1 images`) while preserving scoring/metric integrity.
 - [x] 2026-03-09 canary promotion confirmed: `scorecard_step_0002000_canary10_gpu.json` written and auto-chain advanced to formal 2k gate (`--samples 200`, `scorecard_step_0002000.json` target).
-- [~] 2026-03-09 formal 2k forensic gate in progress; 4k/8k queued behind 2k completion.
+- [x] 2026-03-09 formal 2k forensic gate completed (`scorecard_step_0002000.json`, 200 samples).
+- [~] 2026-03-09 formal 4k forensic gate in progress; 8k queued behind 4k completion.
+- [x] 2026-03-09 2k gate snapshot logged: `vidore_hit10=0.6389`, `CPCR@10=0.4900` (passes CPCR gate `>=0.35`), `cgi_trr` not evaluable at 2k (`cgi_rows=0`).
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
