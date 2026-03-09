@@ -201,6 +201,7 @@ What was patched in harness (`scripts/run_retrieval_harness_raw_image.py`):
 
 Operational caveat:
 - The currently running canary keeps old in-memory code; patched behavior applies on next process launch/relaunch and formal 2k/4k/8k runs.
+- Clean cutover applied for gate runs: supervisors now target fresh cache root `nvme_cache/vision_cache_eval_stable_sha1` (separates formal gates from legacy duplicate cache namespace).
 
 Communication lock:
 - "2k-checkpoint canary running" is not equivalent to "formal 2k gate run started".

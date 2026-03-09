@@ -113,6 +113,7 @@ Execution lock reminder:
 - [x] 2026-03-08 live canary visibility added on Sigma (`watch_canary_gpu.sh` + `live_status.txt` @ 15s refresh) so progress/artifact state is observable in real time.
 - [x] 2026-03-08 auto-chain runner wired: after canary artifact writes, run `0002000 -> 0004000 -> 0008000` automatically using shared eval cache (`vision_cache_eval`) to avoid redundant reprocessing.
 - [x] 2026-03-08 harness hardening patch applied for next launches: deterministic SHA1 cache key + lazy negative candidate resolution + robust multimodal batch fallbacks in `scripts/run_retrieval_harness_raw_image.py` (no metric/scoring drift).
+- [x] 2026-03-08 clean cache cutover for formal gates: supervisor scripts now target `nvme_cache/vision_cache_eval_stable_sha1` to isolate 2k/4k/8k from legacy duplicate-cache namespace.
 - [x] 2026-03-08 terminology lock: distinguish `2k-checkpoint canary running` from `formal 2k gate run started` in status reports.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
