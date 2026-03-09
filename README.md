@@ -10,7 +10,200 @@ Our objective is broad multi-page dominance vs ColQwen across diverse document r
 
 Prompt lock reminder: if drafting/refreshing DeepThink plans, enforce the same mission framing (general model lane + CGI forensic lane), never CGI-only training framing.
 
+## Canonical DeepThink Blueprint (Do Not Drift)
+Use these first after any context compaction/restart:
+- Canonical pointer: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/CANONICAL-PROMPT-PATH-r12.txt`
+- Canonical prompt: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/deepthink-prompt-r12-3-global-mix-correction.md`
+- Canonical spec: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/PHASE5-PREFLIGHT-SPEC-r12-4-GLOBALIZED.md`
+- Canonical blueprint: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/PLAN-OF-ATTACK-r12-3-GLOBAL-BLUEPRINT.md`
+- Forensic recovery lock (eval integrity): `reports/deepthink-packet-2026-03-07-r13-forensic-gates-recovery/deepthink-prompt-r13-forensic-gates-recovery.md`
+
+Execution lock reminder:
+- A1 historical run was exact-spec (`batch-size=2`, `negatives-per-query=3`, `in-batch-negatives=true`, `intra-doc-negatives=true`, `lr=2e-5`, `max-len=4096`).
+- Next-stage ablation order remains A2 -> B -> C (A2 uses `batch-size=1` + grad-accum by design in r12 blueprint).
+
 ## Current status
+
+## Fresh update (2026-03-07, 18:55 EST) — forensic gate recovery, integrity lock
+
+Context (today):
+- We are recovering Phase5 A1 forensic gate artifacts after a long-running rerun (`forensic_v2`) repeatedly failed on image/text batch shape mismatch.
+- Required decision readouts are locked to:
+  1) ViDoRe Hit@10 floor check
+  2) CGI TRR
+- Checkpoint scope remains fixed: `step_0002000`, `step_0004000`, `step_0008000`.
+
+Integrity lock (non-negotiable):
+- No metric-definition drift.
+- No scoring simplification.
+- No candidate-count shortcutting.
+- No dataset shortcutting.
+- Allowed changes are only runtime robustness + telemetry in eval pipeline.
+
+Operational issue observed:
+- Canary eval can stall for a long pre-loop period in image materialization/resolve before scorecard write.
+- Heavy large-image parquet materialization is dominating wall-clock before retrieval scoring begins.
+
+Immediate ops direction:
+- Keep score math/output schema unchanged.
+- Improve only image-processing throughput and observability (safe parallel prep / resolver optimization) with explicit anti-OOM limits.
+- Keep canary gate required before full 2k/4k/8k reruns.
+
+Forensic finding (2026-03-07):
+- Large-image bottleneck source identified: **DUDE corpus** contains over-threshold page images that trigger PIL decompression-bomb warnings and heavy pre-eval preprocessing stalls.
+- Corpus scan summary (threshold ~89,478,485 px):
+  - mpdocvqa-corpus: 0 over threshold
+  - vidore-colpali-train-set: 0 over threshold
+  - vidore-docvqa-train: 0 over threshold
+  - dude-corpus: 11 over threshold (max observed 11267x14598 = 164,475,666 px)
+- Interpretation: current canary delay is primarily DUDE image materialization/preprocessing overhead, not model-scoring math.
+
+Strong-team handling plan (DUDE oversized pages, locked):
+1) deterministic global area-cap policy for eval preprocess (no per-sample tuning),
+2) benchmark-safe processor bounds pinned in config,
+3) cache reuse keyed by content+policy,
+4) optional deterministic extreme-page fallback path only above fixed threshold,
+5) run-level comparability manifest (policy version/thresholds/commit/resource notes).
+
+Execution order (now):
+- Step A: implement deterministic DUDE-safe area cap in eval preprocessing path only.
+- Step B: rerun 10-sample canary (must write scorecard JSON + telemetry).
+- Step C: only after canary pass, run full forensic gates 2k/4k/8k.
+- Constraint: retrieval/scoring math and metric definitions remain unchanged.
+
+## Fresh update (2026-03-07, 23:09 EST) — current execution focus
+
+What we are doing now:
+- Running patched canary (`forensic_v2`) with strict integrity lock intact.
+- Current bottleneck is still preprocessing/materialization, now clearly observable via telemetry.
+
+Already applied (safe-lane changes only):
+- Deterministic oversized-page cap (`--max-page-pixels`, default 89,478,485).
+- Policy-aware materialization cache naming.
+- Detailed stage telemetry (`usable_filter_done`, `START eval`, `model_loaded`, preprocess timing lines).
+- Candidate usability pass changed to index existence check (no early full materialization) to reduce avoidable CPU churn.
+- Additional speed path for oversized pages (`draft()` hint + faster capped resize kernel) while preserving scoring/eval logic.
+
+Current status:
+- Canary reaches eval-start stages consistently and logs preprocessing progress.
+- Scorecard artifact is still pending; full 2k/4k/8k run remains blocked on canary completion.
+
+Next immediate step after this checkpoint:
+- Apply Phase-1 GPU preprocess offload (TorchVision CUDA decode/resize lane) with parity checks, then rerun canary.
+- If canary writes JSON and metrics schema is intact, execute 2k -> 4k -> 8k forensic gates.
+
+## Fresh update (2026-03-07, 23:35 EST) — GPU-first preprocess lane wired
+
+Execution lock honored:
+- Forensic gate scope remains exact: `step_0002000`, `step_0004000`, `step_0008000`.
+- No scoring/math/schema changes; preprocess-only acceleration lane.
+
+What changed in eval harness (`scripts/run_retrieval_harness_raw_image.py`):
+- Added GPU-first image decode/materialization path for **all pages** when `--gpu-preprocess` is enabled.
+- Added TorchVision CUDA decode path (`decode_jpeg(..., device='cuda')`) with fallback handling.
+- Preserved deterministic area-cap policy for oversized pages.
+- Added preprocess manifest stats to scorecard JSON:
+  - `gpu_decode_count`, `gpu_decode_seconds`
+  - `gpu_resize_count`, `gpu_resize_seconds`
+  - `cpu_decode_count`, `cpu_decode_seconds`
+  - `cpu_resize_count`, `cpu_resize_seconds`
+
+Live execution state:
+- Real 2k canary relaunched from archived exact checkpoint path:
+  - `/mnt/ripped_media/GemmPali/checkpoint_archive/phase5_trackA1_global_3gpu/head_step_0002000.pt`
+- GPU lane pinned to safe test lane (`CUDA_VISIBLE_DEVICES=3`) to avoid collateral impact.
+- Waiting on canary scorecard artifact to confirm observed GPU preprocess utilization before advancing to full 2k/4k/8k.
+
+Live visibility added (no more blind waiting):
+- Added watcher script on Sigma:
+  - `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu_forensic_v3_gpucanary/watch_canary_gpu.sh`
+- Added continuously refreshed status file (15s cadence):
+  - `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu_forensic_v3_gpucanary/live_status.txt`
+- Status file includes:
+  - process pid/etime
+  - artifact readiness + size
+  - `gpu_decoded_pages` counter
+  - GPU/CPU resize-line counters
+  - last stage/progress markers
+- Fast check command:
+  - `cat /home/nate/GemmPali/reports/phase5_trackA1_global_3gpu_forensic_v3_gpucanary/live_status.txt`
+## Fresh update (2026-03-08, 01:28 EST) — incident correction + strict lock reaffirmed
+
+Execution lock reaffirmed (unchanged):
+- Forensic scope remains exactly `step_0002000`, `step_0004000`, `step_0008000`.
+- No scoring/math/schema changes.
+- GPU preprocess lane remains enabled path for image decode/materialization acceleration.
+
+What changed operationally tonight:
+- Stage 3 Hair run crashed at step 47000 due to `/home` disk full; emergency cache cleanup/archive was executed.
+- During cleanup, `GemmPali/nvme_cache/raw` was removed and recreated (empty), which changed canary startup behavior.
+- Canary was relaunched on HDD parquet sources and hit startup/indexing stalls plus relaunch argument handling issues before first decode loop.
+- Live status checker remains the source of truth:
+  - `watch_canary_gpu.sh`
+  - `live_status.txt`
+
+Current canary status at this checkpoint:
+- Canary process is present and GPU lane is configured (`--gpu-preprocess`, GPU 3).
+- Startup/indexing remains the active bottleneck before first decoded-page counter increments.
+- Full 2k/4k/8k forensic gate execution remains blocked on successful canary pass.
+
+## Fresh update (2026-03-08, 01:44 EST) — canary recovery confirmed (GPU decode active)
+
+Execution lock still enforced:
+- Forensic scope unchanged: `step_0002000`, `step_0004000`, `step_0008000`.
+- No scoring/math/schema changes.
+- GPU preprocess remains acceleration-only lane.
+
+What was fixed this cycle:
+- Restored expected raw dataset pathing under:
+  - `/home/nate/GemmPali/nvme_cache/raw/{mpdocvqa-corpus,dude-corpus,vidore-colpali-train-set,vidore-docvqa-train}`
+  - via symlinks to HDD corpus paths under `/mnt/ripped_media/GemmPali/datasets/raw/`.
+- Relaunched 2k canary with GPU preprocess enabled on GPU 3.
+- Kept live watcher status file active for real-time observability.
+
+Current verified status:
+- Canary reached startup gates successfully:
+  - `STAGE usable_filter_done rows=40000 usable=32000`
+  - `START eval ... samples=10 candidates=32`
+  - `STAGE preprocess_mode gpu_preprocess=True ...`
+- GPU decode is now actively processing pages:
+  - `decoded page ... via GPU` lines present in log
+  - watcher shows non-zero `gpu_decoded_pages`.
+
+Operational note:
+- Pre-loop parquet/index phase still exists and can look "stalled" before decode starts; use watcher + log stage markers to distinguish real stalls from startup I/O.
+
+Auto-chain wiring (2026-03-08, 03:09 EDT):
+- Added automatic gate runner that waits for canary artifact then runs full forensic sequence without manual intervention:
+  - `0002000 -> 0004000 -> 0008000`
+- Script:
+  - `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu_forensic_v3_gpucanary/auto_chain_after_canary_gpu.sh`
+- Logs:
+  - `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu_forensic_v3_gpucanary/auto_chain.log`
+  - `/home/nate/GemmPali/reports/phase5_trackA1_global_3gpu_forensic_v3_gpucanary/auto_chain.nohup`
+- Cache continuity preserved:
+  - auto-chain uses same `--cache-dir /home/nate/GemmPali/nvme_cache/vision_cache_eval` to avoid redoing already-materialized pages.
+
+## Fresh update (2026-03-08, 19:55 EST) — canary throughput hardening (no metric drift)
+
+Execution lock remains unchanged:
+- Forensic scope still `step_0002000`, `step_0004000`, `step_0008000`.
+- No retrieval/scoring/metric-definition changes.
+
+What was diagnosed:
+- Canary slowness was dominated by eager full-pool resolve/materialization before scoring (`all_docs = ... resolver.resolve(...)`).
+- Cache growth across relaunches was amplified by process-random cache naming (`hash((f, i))`).
+
+What was patched in harness (`scripts/run_retrieval_harness_raw_image.py`):
+- Deterministic cache filenames via stable SHA1 key (`f:i:policy:max_pixels`) to prevent restart duplication.
+- Lazy negative candidate resolution (sample doc keys, resolve only needed candidates) to remove full upfront materialization.
+- Robust multimodal doc batching (`<image>` prompt + batch-attempt fallbacks + per-image fallback).
+
+Operational caveat:
+- The currently running canary keeps old in-memory code; patched behavior applies on next process launch/relaunch and formal 2k/4k/8k runs.
+
+Communication lock:
+- "2k-checkpoint canary running" is not equivalent to "formal 2k gate run started".
 
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
@@ -460,6 +653,7 @@ Current gate status:
 - Formal gate closure is pending v2 scorecards because strict gate fields must include **ViDoRe split Hit@10 + CGI TRR + CPCR@10** in the output schema.
 
 ### Phase A2 (Global pressure, collision-safe)
+- Clarification (lock): **A1 was completed under exact-spec `batch-size=2`** per Nate/DeepThink correction; **A2 intentionally moves to `batch-size=1` + grad-accum** per r12 ablation order (not a watered-down A1 rerun).
 - Keep unrolling + sibling masking unchanged
 - Keep `batch-size=1`
 - Add gradient accumulation as instructed (`gradient_accumulation_steps=4`) once trainer arg is wired

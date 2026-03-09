@@ -1,6 +1,18 @@
 # GemmPali CHECKLIST (SOTA Multi-Page Program)
 
-Updated: 2026-03-06
+Updated: 2026-03-07
+
+## Canonical DeepThink Blueprint (Do Not Drift)
+Always reference these first (no hunting):
+- Canonical pointer: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/CANONICAL-PROMPT-PATH-r12.txt`
+- Canonical prompt: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/deepthink-prompt-r12-3-global-mix-correction.md`
+- Canonical spec: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/PHASE5-PREFLIGHT-SPEC-r12-4-GLOBALIZED.md`
+- Canonical blueprint: `reports/deepthink-packet-2026-03-05-r12-phase5-preflight/PLAN-OF-ATTACK-r12-3-GLOBAL-BLUEPRINT.md`
+- Forensic recovery lock (eval integrity): `reports/deepthink-packet-2026-03-07-r13-forensic-gates-recovery/deepthink-prompt-r13-forensic-gates-recovery.md`
+
+Execution lock reminder:
+- A1 historical run was exact-spec (`batch-size=2`, `negatives-per-query=3`, `in-batch-negatives=true`, `intra-doc-negatives=true`, `lr=2e-5`, `max-len=4096`).
+- Next-stage ablation order remains A2 -> B -> C (A2 uses `batch-size=1` + grad-accum by design in r12 blueprint).
 
 ## Mission lock
 - [x] GemmPali is **NOT CGI-centric**.
@@ -85,6 +97,23 @@ Updated: 2026-03-06
 
 ## Ops / guardrails
 - [x] Check in after each major step.
+- [x] 2026-03-07 forensic recovery lock: required gate metrics are ViDoRe Hit@10 + CGI TRR for 2k/4k/8k; no metric/schema drift allowed.
+- [x] 2026-03-07 anti-repeat rule: do not treat "process alive" as progress; progress requires artifact writes (scorecard JSON) and metric visibility.
+- [~] 2026-03-07 eval throughput patch (safe lane): optimize image pre-processing path only (resolver/materialization bottleneck) with anti-OOM constraints; keep retrieval/scoring math unchanged. (telemetry + fast candidate-existence filter added; full canary completion still pending)
+- [ ] 2026-03-07 canary gate re-validation: canary must produce scorecard + telemetry before full 3-checkpoint rerun.
+- [x] 2026-03-07 root-cause scan complete: oversized pages are concentrated in DUDE corpus (11 images > PIL decompression threshold; max 11267x14598).
+- [x] 2026-03-07 external benchmark ops study: collected DUDE oversized-page handling patterns (deterministic cap + bounds + cache + manifest) from strong public implementations.
+- [~] 2026-03-07 execute DUDE-safe deterministic preprocess cap in eval path (no scoring/math changes). (implemented; monitoring canary impact)
+- [ ] 2026-03-07 canary pass after DUDE-safe cap (scorecard JSON + telemetry required).
+- [ ] 2026-03-07 full 2k/4k/8k forensic rerun after canary pass.
+- [x] 2026-03-07 telemetry hardening complete for eval canary stages/preprocess timing.
+- [~] 2026-03-07 preprocess speed lane update (draft+resize optimization) applied; validating against canary artifact gate.
+- [~] 2026-03-07 Phase-1 GPU preprocess offload (TorchVision CUDA decode/resize) with parity lock + manifest logging. (GPU-first decode/materialization path wired for all pages behind `--gpu-preprocess`; scorecard manifest fields added)
+- [~] 2026-03-07 canary re-run on GPU-preprocess lane must produce scorecard JSON before full forensic gate run. (real 2k canary running from archived exact checkpoint path; artifact pending)
+- [x] 2026-03-08 live canary visibility added on Sigma (`watch_canary_gpu.sh` + `live_status.txt` @ 15s refresh) so progress/artifact state is observable in real time.
+- [x] 2026-03-08 auto-chain runner wired: after canary artifact writes, run `0002000 -> 0004000 -> 0008000` automatically using shared eval cache (`vision_cache_eval`) to avoid redundant reprocessing.
+- [x] 2026-03-08 harness hardening patch applied for next launches: deterministic SHA1 cache key + lazy negative candidate resolution + robust multimodal batch fallbacks in `scripts/run_retrieval_harness_raw_image.py` (no metric/scoring drift).
+- [x] 2026-03-08 terminology lock: distinguish `2k-checkpoint canary running` from `formal 2k gate run started` in status reports.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
@@ -241,6 +270,7 @@ Updated: 2026-03-06
 - [ ] A1 gate verdict recorded (PASS/FAIL with evidence links).
 
 ### A2 preparation (only after A1 gate verdict)
+- [ ] Clarification lock: A1 completed under exact-spec `batch-size=2`; A2 is intentionally `batch-size=1` + grad-accum=4 per DeepThink r12 ablation order (not an A1 downgrade).
 - [ ] Add `--gradient-accumulation-steps` support in `scripts/train_phase4_vision.py`.
 - [ ] Create `launch_phase5_trackA2_global_3gpu.sh` (`batch-size=1`, grad-accum=4).
 - [ ] Keep sibling masking identical to A1 (no miner changes during A2).
