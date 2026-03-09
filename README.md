@@ -284,6 +284,33 @@ Decision (operator, 2026-03-09):
 Gate verdict at 2k (TRR excluded):
 - **PASS** on remaining eval objectives (ViDoRe floor hold + CPCR gate).
 
+## Fresh update (2026-03-09, 18:47 EST) — 4k result + comparative synthesis (TRR excluded)
+
+4k scorecard completed (`scorecard_step_0004000.json`):
+- `Hit@1 = 0.210`
+- `Hit@5 = 0.465`
+- `Hit@10 = 0.595`
+- `MRR@10 = 0.3146`
+- `NDCG@10 = 0.3806`
+- `CPCR@10 = 0.5600`
+- `vidore_hit10 = 0.7167`
+- split Hit@10: `vidore=0.7167`, `mp_docvqa=0.3968`, `dude=0.5122`, `cgi=0.8333`
+- latency: `20175.1 ms`
+
+TRR status at 4k:
+- `cgi_rows=36` but `cgi_adjacent_available=0` → `cgi_trr=null` (same non-evaluable condition as 2k under current candidate set).
+
+2k vs 4k synthesis (TRR excluded):
+- 4k slight gains: `Hit@1`, `MRR@10`, `NDCG@10`.
+- 2k remains stronger overall on gate-relevant quality envelope:
+  - higher `Hit@10` (`0.605` vs `0.595`)
+  - higher `CPCR@10` (`0.570` vs `0.560`)
+  - higher `vidore_hit10` (`0.7333` vs `0.7167`)
+  - slightly lower latency.
+
+Interim winner call (before 8k):
+- **2k checkpoint remains best overall** in current forensic cycle when CGI TRR is excluded.
+
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
 This is an explicit accountability log.

@@ -134,6 +134,11 @@ Execution lock reminder:
   - `CPCR@10=0.5700` (passes `>=0.35`)
   - `vidore_hit10=0.7333` (floor hold)
   - core metrics: `Hit@10=0.605`, `MRR@10=0.3079`, `NDCG@10=0.3775`.
+- [x] 2026-03-09 4k gate (TRR excluded) PASS:
+  - `CPCR@10=0.5600` (passes `>=0.35`)
+  - `vidore_hit10=0.7167` (floor hold)
+  - core metrics: `Hit@10=0.595`, `MRR@10=0.3146`, `NDCG@10=0.3806`.
+- [x] 2026-03-09 2k vs 4k interim ranking (TRR excluded): 2k remains overall winner pre-8k (`Hit@10`, `CPCR@10`, `vidore_hit10`, latency).
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
