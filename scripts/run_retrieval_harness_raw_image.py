@@ -296,7 +296,41 @@ def encode_doc_seq_from_image(wrapper, processor, image_paths, max_len, device, 
     print(f"[{datetime.now().isoformat()}] WARN batch doc encode failed ({last_err}); fallback to per-image encode", flush=True)
     chunks = []
     for i, img in enumerate(images):
-        one = processor(images=[[img]], text=[prompts[i]], return_tensors="pt", padding=True, truncation=True, max_length=max_len)
+        # Gemma3 processor can be strict about image-token alignment.
+        # Retry with alternate prompt token forms + image list shape to avoid
+        # "Prompt contained 0 image tokens but received 1 images" crashes.
+        one = None
+        per_image_err = None
+        prompt_candidates = [
+            prompts[i],
+            "<start_of_image> Index this document page for retrieval.",
+            "Index this document page for retrieval. <image>",
+        ]
+        image_shapes = ([img], [[img]])
+
+        for pc in prompt_candidates:
+            for im in image_shapes:
+                try:
+                    one = processor(
+                        images=im,
+                        text=[pc],
+                        return_tensors="pt",
+                        padding=True,
+                        truncation=True,
+                        max_length=max_len,
+                    )
+                    break
+                except ValueError as e:
+                    per_image_err = e
+                    if "image tokens" in str(e).lower():
+                        continue
+                    raise
+            if one is not None:
+                break
+
+        if one is None:
+            raise ValueError(f"per-image processor fallback failed at idx={i}: {per_image_err}")
+
         chunks.append(_forward(one))
         if (i + 1) % 8 == 0 or (i + 1) == len(images):
             print(f"[{datetime.now().isoformat()}] doc-fallback progress {i+1}/{len(images)}", flush=True)

@@ -114,7 +114,12 @@ Execution lock reminder:
 - [x] 2026-03-08 auto-chain runner wired: after canary artifact writes, run `0002000 -> 0004000 -> 0008000` automatically using shared eval cache (`vision_cache_eval`) to avoid redundant reprocessing.
 - [x] 2026-03-08 harness hardening patch applied for next launches: deterministic SHA1 cache key + lazy negative candidate resolution + robust multimodal batch fallbacks in `scripts/run_retrieval_harness_raw_image.py` (no metric/scoring drift).
 - [x] 2026-03-08 clean cache cutover for formal gates: supervisor scripts now target `nvme_cache/vision_cache_eval_stable_sha1` to isolate 2k/4k/8k from legacy duplicate-cache namespace.
+- [x] 2026-03-08 formal gate readiness checklist lock (must all be true): `CANARY_READY` in auto-chain log, `RUN step=0002000`, active process has `--samples 200` + `--cache-dir ...vision_cache_eval_stable_sha1`, scoring logs show `progress x/200`, and `scorecard_step_0002000.json` contains `forensic_metrics.vidore_hit10` + `forensic_metrics.cgi_trr` + `metrics.CPCR@10`.
+- [x] 2026-03-08 legacy-cache deletion safety lock: do **not** delete `nvme_cache/vision_cache_eval` while any running process references it; delete only after formal gate process is confirmed on stable cache and old cache write-growth has stopped.
 - [x] 2026-03-08 terminology lock: distinguish `2k-checkpoint canary running` from `formal 2k gate run started` in status reports.
+- [x] 2026-03-09 per-image fallback hardening applied in `run_retrieval_harness_raw_image.py` to prevent image-token mismatch crash loops (`Prompt contained 0 image tokens but received 1 images`) while preserving scoring/metric integrity.
+- [x] 2026-03-09 canary promotion confirmed: `scorecard_step_0002000_canary10_gpu.json` written and auto-chain advanced to formal 2k gate (`--samples 200`, `scorecard_step_0002000.json` target).
+- [~] 2026-03-09 formal 2k forensic gate in progress; 4k/8k queued behind 2k completion.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.

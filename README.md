@@ -206,6 +206,28 @@ Operational caveat:
 Communication lock:
 - "2k-checkpoint canary running" is not equivalent to "formal 2k gate run started".
 
+## Fresh update (2026-03-09, 07:40 EST) — formal 2k forensic gate live + fallback hardening verified
+
+Execution lock remains unchanged:
+- Forensic scope remains exactly `step_0002000`, `step_0004000`, `step_0008000`.
+- No retrieval/scoring/metric-definition changes.
+- GPU preprocess lane + deterministic SHA1 cache keys remain active.
+
+What was fixed and verified:
+- Patched per-image fallback in `scripts/run_retrieval_harness_raw_image.py` to avoid crash-loop on:
+  - `ValueError: Prompt contained 0 image tokens but received 1 images.`
+- Fallback now retries alternate image-token prompt forms and image-shape forms before failing.
+- Live logs confirm patched lane is active under load (`doc-fallback progress 8/32 ... 32/32`).
+
+Formal gate status (this checkpoint):
+- Canary artifact completed: `scorecard_step_0002000_canary10_gpu.json`.
+- Auto-chain promoted to **formal 2k** run (`--samples 200`, output `scorecard_step_0002000.json`).
+- Formal 4k/8k remain queued behind 2k completion.
+
+Telemetry note:
+- `live_status.txt` is canary-oriented and may appear stale during formal 2k/4k/8k phases.
+- Source of truth during formal gates is `auto_chain.log` + active process args + scorecard artifact presence.
+
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
 This is an explicit accountability log.
