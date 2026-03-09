@@ -255,6 +255,24 @@ Recovery plan (integrity-locked):
 - Keep retrieval/scoring/metrics math unchanged.
 - Relaunch forensic gate chain after patch so CGI TRR becomes evaluable at 2k/4k/8k.
 
+## Fresh update (2026-03-09, 14:20 EST) — TRR evaluability fix applied
+
+Follow-up finding after CGI inclusion fix:
+- 2k scorecard now includes CGI rows (`cgi_rows=36`) but still had `cgi_adjacent_available=0`, so `cgi_trr` remained null.
+
+Root cause:
+- Candidate negative pool was purely random from global doc-page keys.
+- Even with CGI rows present, adjacent same-doc trap pages were not guaranteed to appear in top candidate set.
+
+Fix applied (integrity-preserving):
+- In eval harness candidate construction, for CGI rows only:
+  - inject same-doc adjacent-page negatives (`abs(page - expected_page) <= 2`) before random fill.
+- This changes candidate composition for TRR measurability but does **not** change scoring/math/metric formulas.
+
+Operational action:
+- Formal forensic artifacts (2k/4k/8k) were cleared and auto-chain relaunched under patched harness.
+- Current chain restarted from `step_0002000` for clean comparable outputs.
+
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
 This is an explicit accountability log.

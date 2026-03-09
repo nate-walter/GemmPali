@@ -478,8 +478,35 @@ def run_eval(args):
         if not expected_pages and pos_page is not None:
             expected_pages = {pos_page}
 
+        dtag = _domain_tag(r)
+
         negs = []
         seen_neg_keys = set()
+
+        # For CGI forensic rows, inject same-doc adjacent-page traps first
+        # so CGI TRR is evaluable (without altering scoring math).
+        if dtag == "cgi" and pos_doc_id is not None and expected_pages:
+            adj_pool = []
+            for did, pg_i in all_doc_keys:
+                if did != pos_doc_id or pg_i is None:
+                    continue
+                if pg_i in expected_pages:
+                    continue
+                if any(abs(pg_i - ep) <= 2 for ep in expected_pages):
+                    adj_pool.append((did, pg_i))
+            random.shuffle(adj_pool)
+            for did, pg_i in adj_pool:
+                if len(negs) >= max(1, args.candidates - 1):
+                    break
+                neg_key = (did, pg_i)
+                if neg_key in seen_neg_keys:
+                    continue
+                p = resolver.resolve({"target_doc_id": did, "target_page": pg_i})
+                if not p:
+                    continue
+                negs.append((did, pg_i, p))
+                seen_neg_keys.add(neg_key)
+
         tries = 0
         while len(negs) < max(1, args.candidates - 1) and tries < args.candidates * 200:
             did, pg_i = random.choice(all_doc_keys)
@@ -537,7 +564,6 @@ def run_eval(args):
         if expected_pages.issubset(top10_pages_for_doc):
             cpcr10_hits += 1
 
-        dtag = _domain_tag(r)
         split_totals[dtag] += 1
         if first_true_rank <= 10:
             split_hit10[dtag] += 1
