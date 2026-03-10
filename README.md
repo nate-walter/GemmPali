@@ -342,6 +342,33 @@ Scope + decision context:
 ### Recommended carry-forward artifact
 - Promote/use `head_step_0002000.pt` as current forensic-cycle winner for next-stage decisions unless next objective explicitly prioritizes rank-shape (`MRR/NDCG`) or minimal latency.
 
+## Fresh update (2026-03-09, 21:49 EST) — Track A2 launched (Option 1)
+
+Decision executed:
+- Proceed with **Option 1 / Track A2** per canonical order (`A2 -> B -> C`).
+
+A2 launch configuration (live):
+- Run name: `phase5_trackA2_global_3gpu`
+- Init checkpoint: `head_step_0002000.pt` (A1 winner)
+- GPUs: `0,3,4` (3-GPU DDP)
+- `batch-size=1`
+- `gradient-accumulation-steps=4`
+- `negatives-per-query=3`
+- `intra-doc-negatives=true`
+- `in-batch-negatives=true`
+- `lr=2e-5`, `max-len=4096`
+
+Code updates applied for A2 execution:
+- `scripts/train_phase4_vision.py`
+  - added `--gradient-accumulation-steps`
+  - added `--init-head` support (head + LoRA warm-start)
+  - optimizer step now respects accumulation cadence
+- new launcher: `scripts/launch_phase5_trackA2_global_3gpu.sh`
+
+Live artifacts/logs:
+- Nohup log: `/home/nate/GemmPali/reports/phase5_trackA2_global_3gpu.nohup.log`
+- Train log: `/home/nate/GemmPali/reports/phase5_trackA2_global_3gpu.log`
+
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
 This is an explicit accountability log.

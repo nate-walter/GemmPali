@@ -317,6 +317,7 @@ def main():
     ap.add_argument("--in-batch-negatives", type=str2bool, default=True)
     ap.add_argument("--negatives-per-query", type=int, default=1)
     ap.add_argument("--batch-size", type=int, default=1)
+    ap.add_argument("--gradient-accumulation-steps", type=int, default=1)
     ap.add_argument("--log-every", type=int, default=10)
     ap.add_argument("--eval-every", type=int, default=250)
     ap.add_argument("--eval-batches", type=int, default=8)
@@ -332,6 +333,7 @@ def main():
     ap.add_argument("--lora-r", type=int, default=16)
     ap.add_argument("--lora-alpha", type=int, default=32)
     ap.add_argument("--lora-dropout", type=float, default=0.05)
+    ap.add_argument("--init-head", default="")
     args = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -401,10 +403,20 @@ def main():
         if "lora_" in n:
             p.requires_grad = True
 
+    if args.init_head:
+        cp = torch.load(args.init_head, map_location="cpu")
+        if "head" in cp:
+            wrapper.head.load_state_dict(cp["head"], strict=True)
+        if "lora" in cp and cp["lora"]:
+            wrapper.backbone.load_state_dict(cp["lora"], strict=False)
+        if local_rank == 0:
+            print(f"init_head_loaded={args.init_head}", flush=True)
+
     model = DDP(wrapper, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     params = [p for p in model.module.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(params, lr=args.lr)
+    grad_accum = max(1, int(args.gradient_accumulation_steps))
 
     if local_rank == 0:
         trainable = sum(p.numel() for p in params)
@@ -428,6 +440,9 @@ def main():
 
     checkpoint_meta = []
     last_eval = None
+
+    optimizer.zero_grad(set_to_none=True)
+    grad_norm = torch.tensor(0.0, device=device)
 
     for step in range(1, args.steps + 1):
         lr_now = set_lr(optimizer, step, args.steps, args.lr, args.scheduler, args.warmup_steps)
@@ -480,12 +495,13 @@ def main():
         labels = torch.zeros(logits.size(0), dtype=torch.long, device=device)
         loss = torch.nn.functional.cross_entropy(logits, labels)
 
-        optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(params, args.max_grad_norm)
-        if args.max_grad_value is not None:
-            torch.nn.utils.clip_grad_value_(params, args.max_grad_value)
-        optimizer.step()
+        (loss / grad_accum).backward()
+        if step % grad_accum == 0:
+            grad_norm = torch.nn.utils.clip_grad_norm_(params, args.max_grad_norm)
+            if args.max_grad_value is not None:
+                torch.nn.utils.clip_grad_value_(params, args.max_grad_value)
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
 
         if step % args.eval_every == 0:
             model.eval()

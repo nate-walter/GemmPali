@@ -145,6 +145,10 @@ Execution lock reminder:
 - [x] 2026-03-09 final cycle winner (TRR excluded): **2k checkpoint**.
 - [x] 2026-03-09 README final summary section updated with dedicated 2k/4k/8k scoreboard and winner call.
 - [x] 2026-03-09 comprehensive forensic cycle report added under `reports/`.
+- [x] 2026-03-09 next-step decision set: execute Option 1 (Track A2) per canonical ablation order.
+- [x] 2026-03-09 added trainer support for A2 runtime (`--gradient-accumulation-steps`, `--init-head`).
+- [x] 2026-03-09 created A2 launcher `scripts/launch_phase5_trackA2_global_3gpu.sh`.
+- [~] 2026-03-09 Track A2 launched on Sigma (`phase5_trackA2_global_3gpu`) from A1 winner init (`head_step_0002000.pt`), monitoring in progress.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.
