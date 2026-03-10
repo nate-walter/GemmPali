@@ -139,6 +139,12 @@ Execution lock reminder:
   - `vidore_hit10=0.7167` (floor hold)
   - core metrics: `Hit@10=0.595`, `MRR@10=0.3146`, `NDCG@10=0.3806`.
 - [x] 2026-03-09 2k vs 4k interim ranking (TRR excluded): 2k remains overall winner pre-8k (`Hit@10`, `CPCR@10`, `vidore_hit10`, latency).
+- [x] 2026-03-09 8k gate completed (TRR excluded):
+  - `Hit@10=0.590`, `MRR@10=0.3074`, `NDCG@10=0.3748`, `CPCR@10=0.550`, `vidore_hit10=0.7167`.
+- [x] 2026-03-09 full 2k/4k/8k forensic cycle complete.
+- [x] 2026-03-09 final cycle winner (TRR excluded): **2k checkpoint**.
+- [x] 2026-03-09 README final summary section updated with dedicated 2k/4k/8k scoreboard and winner call.
+- [x] 2026-03-09 comprehensive forensic cycle report added under `reports/`.
 - [x] Expo iPhone launch note recorded: paste `exp://<LAN-IP>:8081` in Safari, then open in Expo Go.
 - [x] Keep all long-term datasets on HDD.
 - [x] Use NVMe only as temporary training cache, staged per phase.

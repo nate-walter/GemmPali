@@ -311,6 +311,37 @@ TRR status at 4k:
 Interim winner call (before 8k):
 - **2k checkpoint remains best overall** in current forensic cycle when CGI TRR is excluded.
 
+## 🧪 Forensic Gate Cycle Summary (2k / 4k / 8k) — 2026-03-09 (Final)
+
+Scope + decision context:
+- This cycle executed forensic gates at `step_0002000`, `step_0004000`, `step_0008000`.
+- CGI rows are now present in all scorecards (`cgi_rows=36` each).
+- `cgi_trr` remains non-evaluable (`cgi_adjacent_available=0`) due to current candidate-pool composition.
+- Operator decision for this cycle: finalize on remaining gates/metrics with TRR excluded.
+
+### Final scoreboard
+
+| Checkpoint | Hit@1 | Hit@5 | Hit@10 | MRR@10 | NDCG@10 | CPCR@10 | ViDoRe Hit@10 | CGI Hit@10 | Latency (ms) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2k | 0.205 | 0.465 | **0.605** | 0.3079 | 0.3775 | **0.570** | **0.7333** | 0.8333 | 20083.9 |
+| 4k | **0.210** | 0.465 | 0.595 | **0.3146** | **0.3806** | 0.560 | 0.7167 | 0.8333 | 20175.1 |
+| 8k | 0.190 | **0.475** | 0.590 | 0.3074 | 0.3748 | 0.550 | 0.7167 | 0.8333 | **20052.5** |
+
+### Gate interpretation (TRR excluded)
+- **CPCR gate (`>= 0.35`)**: PASS at all three checkpoints (2k/4k/8k).
+- **ViDoRe floor hold**: strongest at 2k, stable at 4k/8k.
+- **Multipage functionality**: confirmed and stable across checkpoints.
+
+### Winner call
+- **Best overall checkpoint: 2k**
+  - strongest `Hit@10`, `CPCR@10`, `vidore_hit10`
+  - near-best latency (very close to 8k)
+- 4k provides best ranking-shape metrics (`MRR@10`, `NDCG@10`, `Hit@1`) but underperforms 2k on multipage consistency and ViDoRe hold.
+- 8k is fastest and best on `Hit@5`, but trails 2k on top-10 recall and CPCR.
+
+### Recommended carry-forward artifact
+- Promote/use `head_step_0002000.pt` as current forensic-cycle winner for next-stage decisions unless next objective explicitly prioritizes rank-shape (`MRR/NDCG`) or minimal latency.
+
 ## Fresh update (2026-03-06, 09:35 EST) — operator correction + rerun
 
 This is an explicit accountability log.
